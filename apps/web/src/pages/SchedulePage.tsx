@@ -55,7 +55,9 @@ export function SchedulePage() {
         <PageHeader eyebrow="Semana" title="Horario" />
         <EmptyState
           title="Selecciona un periodo"
-          description="El horario se organiza por trimestre o semestre."
+          description="Configura el trimestre o semestre desde Perfil."
+          actionLabel="Ir a perfil"
+          actionTo="/perfil"
         />
       </>
     );
@@ -180,7 +182,7 @@ export function SchedulePage() {
             <label htmlFor="slot-label">Etiqueta</label>
             <input
               id="slot-label"
-              placeholder="Clase, lab…"
+              placeholder="Etiqueta"
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
             />

@@ -49,7 +49,9 @@ export function NotesPage() {
         <PageHeader eyebrow="Memoria" title="Apuntes" />
         <EmptyState
           title="Selecciona un periodo"
-          description="Los apuntes quedan asociados al trimestre o semestre activo."
+          description="Configura el trimestre o semestre desde Perfil."
+          actionLabel="Ir a perfil"
+          actionTo="/perfil"
         />
       </>
     );
@@ -114,7 +116,7 @@ export function NotesPage() {
             <label htmlFor="note-title">Título</label>
             <input
               id="note-title"
-              placeholder="Idea clave"
+              placeholder="Título"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
@@ -139,7 +141,7 @@ export function NotesPage() {
             <label htmlFor="note-body">Contenido</label>
             <textarea
               id="note-body"
-              placeholder="Escribe aquí…"
+              placeholder="Contenido"
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
             />

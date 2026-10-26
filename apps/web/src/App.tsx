@@ -1,18 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { BRAND_NAME } from "./brand";
-import { PeriodSwitcher } from "./components/PeriodSwitcher";
 import { DashboardPage } from "./pages/DashboardPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { NotesPage } from "./pages/NotesPage";
-import { NotificationsPage } from "./pages/NotificationsPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { usePeriod } from "./period-context";
 import { periodKindLabel } from "./labels";
+import { loadProfile, type ProfileSettings } from "./profile-settings";
 
 export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { current } = usePeriod();
+  const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
+
+  useEffect(() => {
+    const sync = () => setProfile(loadProfile());
+    window.addEventListener("studyy-profile-updated", sync);
+    return () => window.removeEventListener("studyy-profile-updated", sync);
+  }, []);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -62,20 +69,24 @@ export function App() {
             <NavLink to="/apuntes" onClick={closeMenu}>
               Apuntes
             </NavLink>
-            <NavLink to="/notificaciones" onClick={closeMenu}>
-              Avisos
+            <NavLink to="/perfil" onClick={closeMenu}>
+              Perfil
             </NavLink>
           </nav>
         </div>
 
-        <div className="topbar-period">
-          {current && (
-            <p className="period-chip">
-              {periodKindLabel(current.kind)} · {current.name}
-            </p>
-          )}
-          <PeriodSwitcher />
-        </div>
+        {(current || profile.displayName) && (
+          <div className="topbar-meta">
+            {profile.displayName && (
+              <span className="period-chip">{profile.displayName}</span>
+            )}
+            {current && (
+              <NavLink to="/perfil" className="period-chip period-chip-link">
+                {periodKindLabel(current.kind)} · {current.name}
+              </NavLink>
+            )}
+          </div>
+        )}
       </header>
 
       <main id="contenido">
@@ -84,7 +95,8 @@ export function App() {
           <Route path="/materias" element={<SubjectsPage />} />
           <Route path="/horario" element={<SchedulePage />} />
           <Route path="/apuntes" element={<NotesPage />} />
-          <Route path="/notificaciones" element={<NotificationsPage />} />
+          <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/notificaciones" element={<ProfilePage />} />
         </Routes>
       </main>
     </div>

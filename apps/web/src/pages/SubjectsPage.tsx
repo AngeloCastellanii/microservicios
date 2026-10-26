@@ -95,7 +95,9 @@ export function SubjectsPage() {
         <PageHeader eyebrow="Organización" title="Materias" />
         <EmptyState
           title="Selecciona un periodo"
-          description="Crea o elige un trimestre/semestre arriba para gestionar materias."
+          description="Configura el trimestre o semestre desde Perfil."
+          actionLabel="Ir a perfil"
+          actionTo="/perfil"
         />
       </>
     );
@@ -152,7 +154,7 @@ export function SubjectsPage() {
               <label htmlFor="subject-name">Nueva materia</label>
               <input
                 id="subject-name"
-                placeholder="Ej. Sistemas Distribuidos"
+                placeholder="Nombre"
                 value={subjectForm.name}
                 onChange={(e) =>
                   setSubjectForm({ ...subjectForm, name: e.target.value })
@@ -164,7 +166,7 @@ export function SubjectsPage() {
               <label htmlFor="subject-desc">Descripción</label>
               <input
                 id="subject-desc"
-                placeholder="Opcional"
+                placeholder="Descripción"
                 value={subjectForm.description}
                 onChange={(e) =>
                   setSubjectForm({ ...subjectForm, description: e.target.value })
@@ -233,7 +235,7 @@ export function SubjectsPage() {
                   <label htmlFor="item-title">Nuevo ítem</label>
                   <input
                     id="item-title"
-                    placeholder="Título"
+                    placeholder="Nombre"
                     value={itemForm.title}
                     onChange={(e) =>
                       setItemForm({ ...itemForm, title: e.target.value })

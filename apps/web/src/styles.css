@@ -133,9 +133,27 @@ textarea {
   flex-wrap: wrap;
 }
 
-.topbar-period {
-  display: grid;
+.topbar-meta {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
+}
+
+.period-chip-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  animation: rise 0.45s ease both;
+}
+
+.profile-span {
+  grid-column: 1 / -1;
 }
 
 .period-chip {
@@ -750,7 +768,8 @@ textarea {
 
 @media (max-width: 980px) {
   .hero-panel,
-  .split {
+  .split,
+  .profile-layout {
     grid-template-columns: 1fr;
   }
 

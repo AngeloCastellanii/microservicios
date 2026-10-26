@@ -73,9 +73,9 @@ apps/web                UI React
 docs/mockups            Referencias visuales
 ```
 
-## Periodos (trimestre / semestre)
+## Periodos y perfil
 
-En la cabecera puedes **crear, elegir o borrar** un periodo. Materias, horario y apuntes quedan asociados al periodo activo.
+En **Perfil** configuras datos personales, periodo académico (trimestre/semestre) y avisos. Materias, horario y apuntes usan el periodo activo.
 
 ## Demo de RPC bidireccional
 

@@ -73,8 +73,10 @@ export function DashboardPage() {
 
       {!current && !periodLoading && (
         <EmptyState
-          title="Crea un periodo"
-          description="Organiza Studyy por trimestre o semestre desde el selector superior."
+          title="Configura un periodo"
+          description="Ve a Perfil para crear o activar un trimestre o semestre."
+          actionLabel="Ir a perfil"
+          actionTo="/perfil"
         />
       )}
 
@@ -163,8 +165,8 @@ export function DashboardPage() {
                 ))}
               </div>
             )}
-            <Link className="link-more" to="/notificaciones">
-              Ver todos los avisos →
+            <Link className="link-more" to="/perfil">
+              Ver avisos en perfil →
             </Link>
           </section>
         </div>
