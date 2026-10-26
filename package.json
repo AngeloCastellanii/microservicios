@@ -4,15 +4,28 @@
   "version": "0.1.0",
   "description": "Plataforma académica con microservicios gRPC (AcadFlow)",
   "scripts": {
-    "build": "pnpm -r run build",
+    "build": "pnpm -r --filter @acadflow/proto --filter @acadflow/shared --filter @acadflow/rpc-wrapper run build",
     "build:proto": "pnpm --filter @acadflow/proto build",
+    "build:packages": "pnpm --filter @acadflow/proto --filter @acadflow/shared --filter @acadflow/rpc-wrapper run build",
     "dev:db": "docker compose up -d",
     "dev:db:down": "docker compose down",
+    "db:generate": "pnpm --filter @acadflow/academic db:generate && pnpm --filter @acadflow/notifications db:generate",
+    "db:push": "pnpm --filter @acadflow/academic db:push && pnpm --filter @acadflow/notifications db:push",
+    "db:seed": "pnpm --filter @acadflow/academic db:seed && pnpm --filter @acadflow/notifications db:seed",
+    "dev:academic": "pnpm --filter @acadflow/academic dev",
+    "dev:notifications": "pnpm --filter @acadflow/notifications dev",
+    "dev:gateway": "pnpm --filter @acadflow/gateway dev",
+    "dev:web": "pnpm --filter @acadflow/web dev",
     "typecheck": "pnpm -r run typecheck"
   },
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@11.2.2"
+  "packageManager": "pnpm@11.2.2",
+  "devDependencies": {
+    "dotenv": "^16.5.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
 }

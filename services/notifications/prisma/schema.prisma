@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NOTIFICATIONS_DATABASE_URL")
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  kind          NotificationKind
+  title         String
+  body          String           @default("")
+  relatedItemId String?
+  readAt        DateTime?
+  dismissedAt   DateTime?
+  createdAt     DateTime         @default(now())
+
+  @@index([relatedItemId])
+  @@index([createdAt])
+}
+
+enum NotificationKind {
+  NORMAL
+  PERSISTENT
+}

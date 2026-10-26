@@ -2,58 +2,74 @@
 
 Plataforma de gestión académica (materias, tareas, proyectos, exámenes, horario, apuntes y notificaciones) con **2 microservicios gRPC**, PostgreSQL, gateway HTTP y frontend React.
 
+## Arquitectura
+
+```
+apps/web (React) → apps/gateway (Fastify REST)
+                      ├─ gRPC → services/academic (PostgreSQL: academic)
+                      └─ gRPC → services/notifications (PostgreSQL: notifications)
+
+Ida y vuelta:
+  academic → notifications  (crea recordatorio PERSISTENT al crear ítem con fecha)
+  notifications → academic  (enriquece listados con título/materia del ítem)
+```
+
 ## Stack
 
-- Node.js + TypeScript + PNPM (monorepo)
-- gRPC (`@grpc/grpc-js`)
+- Node.js + TypeScript + PNPM
+- gRPC + `@acadflow/rpc-wrapper` (reutilizable)
 - PostgreSQL (Docker)
-- Prisma (servicios)
-- Fastify (gateway)
-- React + Vite (web)
+- Prisma
+- Fastify + React/Vite
+
+## Requisitos
+
+- Node >= 20
+- PNPM >= 9
+- Docker Desktop **en ejecución**
+
+## Arranque
+
+```bash
+pnpm install
+pnpm build:packages
+pnpm dev:db
+pnpm db:generate
+pnpm db:push
+pnpm db:seed
+```
+
+PostgreSQL del proyecto usa el puerto **5434** (para no chocar con otros Postgres locales).
+
+En **4 terminales**:
+
+```bash
+pnpm dev:notifications
+pnpm dev:academic
+pnpm dev:gateway
+pnpm dev:web
+```
+
+- Web: http://localhost:5173  
+- Gateway: http://localhost:3010/health  
+- Academic gRPC: `50051`  
+- Notifications gRPC: `50052`  
+- Postgres: `127.0.0.1:5434`
 
 ## Estructura
 
 ```
-packages/proto          # Contratos .proto + tipos generados
-packages/shared         # Utilidades compartidas
-packages/rpc-wrapper    # (próxima parte) wrapper gRPC reutilizable
-services/academic       # (próxima parte)
-services/notifications  # (próxima parte)
-apps/gateway            # (más adelante)
-apps/web                # (más adelante)
+packages/proto          Contratos .proto + tipos
+packages/shared         Utilidades
+packages/rpc-wrapper    Server/client gRPC reutilizable
+services/academic       Dominio académico + BD
+services/notifications  Notificaciones NORMAL/PERSISTENT + BD
+apps/gateway            REST → gRPC
+apps/web                UI React
+docs/mockups            Referencias visuales
 ```
 
-## Parte 1 — Scaffold (estado actual)
+## Demo de RPC bidireccional
 
-### Requisitos
-
-- Node >= 20
-- PNPM >= 9
-- Docker Desktop
-
-### Arranque
-
-```bash
-pnpm install
-pnpm build:proto
-pnpm dev:db
-```
-
-PostgreSQL queda en `localhost:5432` con bases `academic` y `notifications` (usuario/clave `acadflow`).
-
-Copia de variables: `.env.example` → `.env` (ya incluido en local).
-
-### Mockups UI
-
-Ver `docs/mockups/`.
-
-## Próximas partes
-
-1. ~~Scaffold monorepo + Docker + protos~~
-2. `packages/rpc-wrapper`
-3. Servicio `academic`
-4. Servicio `notifications`
-5. Llamadas cruzadas
-6. Gateway REST
-7. Frontend
-8. Seed + docs finales
+1. Crea un ítem con fecha en **Materias** → academic llama a notifications.
+2. Abre **Notificaciones** → notifications llama a academic (`GetItem`) para mostrar título/materia.

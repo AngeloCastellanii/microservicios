@@ -2,7 +2,7 @@
 export const DEFAULT_PORTS = {
   academicGrpc: 50051,
   notificationsGrpc: 50052,
-  gateway: 3000,
+  gateway: 3010,
 } as const;
 
 export type ServiceName = "academic" | "notifications" | "gateway";

@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ACADEMIC_DATABASE_URL")
+}
+
+model Subject {
+  id          String         @id @default(cuid())
+  name        String
+  description String         @default("")
+  color       String         @default("#0F766E")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  items       Item[]
+  notes       Note[]
+  slots       ScheduleSlot[]
+}
+
+model Item {
+  id          String     @id @default(cuid())
+  subjectId   String
+  subject     Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  title       String
+  description String     @default("")
+  type        ItemType
+  status      ItemStatus @default(PENDING)
+  dueAt       DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([subjectId])
+  @@index([dueAt])
+}
+
+model ScheduleSlot {
+  id        String   @id @default(cuid())
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  label     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  title     String
+  body      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId])
+}
+
+enum ItemType {
+  TASK
+  PROJECT
+  EXAM
+}
+
+enum ItemStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  SCHEDULED
+}
