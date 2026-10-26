@@ -1,6 +1,6 @@
-# AcadFlow — Microservicios académicos
+# Studyy — Microservicios académicos
 
-Plataforma de gestión académica (materias, tareas, proyectos, exámenes, horario, apuntes y notificaciones) con **2 microservicios gRPC**, PostgreSQL, gateway HTTP y frontend React.
+**Studyy**: plataforma de gestión académica (materias, tareas, proyectos, exámenes, horario, apuntes y avisos) con **2 microservicios gRPC**, PostgreSQL, gateway HTTP y frontend React.
 
 ## Arquitectura
 
@@ -30,20 +30,20 @@ Ida y vuelta:
 
 ## Arranque
 
-```bash
+En PowerShell (sin `&&`):
+
+```powershell
 pnpm install
 pnpm build:packages
 pnpm dev:db
-pnpm db:generate
-pnpm db:push
-pnpm db:seed
+pnpm db:setup
 ```
 
 PostgreSQL del proyecto usa el puerto **5434** (para no chocar con otros Postgres locales).
 
-En **4 terminales**:
+Abre **4 terminales** y corre **uno por terminal**:
 
-```bash
+```powershell
 pnpm dev:notifications
 pnpm dev:academic
 pnpm dev:gateway
@@ -55,6 +55,10 @@ pnpm dev:web
 - Academic gRPC: `50051`  
 - Notifications gRPC: `50052`  
 - Postgres: `127.0.0.1:5434`
+
+### Si dice `EADDRINUSE` / `No address added`
+
+El puerto ya está ocupado por una instancia anterior. Cierra esa terminal o mata el proceso y vuelve a intentar. No hace falta volver a levantar un servicio que ya está corriendo.
 
 ## Estructura
 
@@ -69,7 +73,11 @@ apps/web                UI React
 docs/mockups            Referencias visuales
 ```
 
+## Periodos (trimestre / semestre)
+
+En la cabecera puedes **crear, elegir o borrar** un periodo. Materias, horario y apuntes quedan asociados al periodo activo.
+
 ## Demo de RPC bidireccional
 
 1. Crea un ítem con fecha en **Materias** → academic llama a notifications.
-2. Abre **Notificaciones** → notifications llama a academic (`GetItem`) para mostrar título/materia.
+2. Abre **Avisos** → notifications llama a academic (`GetItem`) para mostrar título/materia.

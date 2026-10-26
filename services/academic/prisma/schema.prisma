@@ -8,16 +8,32 @@ datasource db {
   url      = env("ACADEMIC_DATABASE_URL")
 }
 
+model Period {
+  id        String     @id @default(cuid())
+  name      String
+  kind      PeriodKind
+  year      Int
+  isActive  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  subjects  Subject[]
+  notes     Note[]
+}
+
 model Subject {
   id          String         @id @default(cuid())
+  periodId    String
+  period      Period         @relation(fields: [periodId], references: [id], onDelete: Cascade)
   name        String
   description String         @default("")
-  color       String         @default("#0F766E")
+  color       String         @default("#0C3B2E")
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   items       Item[]
   notes       Note[]
   slots       ScheduleSlot[]
+
+  @@index([periodId])
 }
 
 model Item {
@@ -52,6 +68,8 @@ model ScheduleSlot {
 
 model Note {
   id        String   @id @default(cuid())
+  periodId  String?
+  period    Period?  @relation(fields: [periodId], references: [id], onDelete: Cascade)
   subjectId String?
   subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   title     String
@@ -60,6 +78,12 @@ model Note {
   updatedAt DateTime @updatedAt
 
   @@index([subjectId])
+  @@index([periodId])
+}
+
+enum PeriodKind {
+  TRIMESTER
+  SEMESTER
 }
 
 enum ItemType {

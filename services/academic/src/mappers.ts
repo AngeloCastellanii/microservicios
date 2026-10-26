@@ -3,6 +3,8 @@ import type {
   ItemStatus,
   ItemType,
   Note,
+  Period,
+  PeriodKind,
   ScheduleSlot,
   Subject,
 } from "@acadflow/proto";
@@ -11,6 +13,8 @@ import type {
   ItemStatus as DbItemStatus,
   ItemType as DbItemType,
   Note as DbNote,
+  Period as DbPeriod,
+  PeriodKind as DbPeriodKind,
   ScheduleSlot as DbSlot,
   Subject as DbSubject,
 } from "./generated/prisma/index.js";
@@ -19,9 +23,22 @@ function iso(value: Date | null | undefined): string {
   return value ? value.toISOString() : "";
 }
 
+export function mapPeriod(row: DbPeriod): Period {
+  return {
+    id: row.id,
+    name: row.name,
+    kind: row.kind as PeriodKind,
+    year: row.year,
+    isActive: row.isActive,
+    createdAt: iso(row.createdAt),
+    updatedAt: iso(row.updatedAt),
+  };
+}
+
 export function mapSubject(row: DbSubject): Subject {
   return {
     id: row.id,
+    periodId: row.periodId,
     name: row.name,
     description: row.description,
     color: row.color,
@@ -68,6 +85,7 @@ export function mapNote(
 ): Note {
   return {
     id: row.id,
+    periodId: row.periodId ?? "",
     subjectId: row.subjectId ?? "",
     title: row.title,
     body: row.body,
@@ -87,4 +105,11 @@ export function toDbItemStatus(
 ): DbItemStatus | undefined {
   if (!value || value === "ITEM_STATUS_UNSPECIFIED") return undefined;
   return value as DbItemStatus;
+}
+
+export function toDbPeriodKind(
+  value: string | undefined,
+): DbPeriodKind | undefined {
+  if (!value || value === "PERIOD_KIND_UNSPECIFIED") return undefined;
+  return value as DbPeriodKind;
 }

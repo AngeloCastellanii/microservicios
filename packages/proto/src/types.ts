@@ -1,4 +1,9 @@
-/** Tipos alineados con academic.proto / notifications.proto (enums como string vía proto-loader). */
+/** Tipos alineados con academic.proto / notifications.proto */
+
+export type PeriodKind =
+  | "PERIOD_KIND_UNSPECIFIED"
+  | "TRIMESTER"
+  | "SEMESTER";
 
 export type ItemType = "ITEM_TYPE_UNSPECIFIED" | "TASK" | "PROJECT" | "EXAM";
 export type ItemStatus =
@@ -17,8 +22,40 @@ export interface DeleteResponse {
   ok: boolean;
 }
 
+export interface Period {
+  id: string;
+  name: string;
+  kind: PeriodKind;
+  year: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePeriodRequest {
+  name: string;
+  kind: PeriodKind;
+  year: number;
+  setActive?: boolean;
+}
+
+export interface ListPeriodsRequest {}
+
+export interface ListPeriodsResponse {
+  periods: Period[];
+}
+
+export interface SetActivePeriodRequest {
+  id: string;
+}
+
+export interface DeletePeriodRequest {
+  id: string;
+}
+
 export interface Subject {
   id: string;
+  periodId: string;
   name: string;
   description: string;
   color: string;
@@ -27,12 +64,15 @@ export interface Subject {
 }
 
 export interface CreateSubjectRequest {
+  periodId: string;
   name: string;
   description?: string;
   color?: string;
 }
 
-export interface ListSubjectsRequest {}
+export interface ListSubjectsRequest {
+  periodId?: string;
+}
 
 export interface ListSubjectsResponse {
   subjects: Subject[];
@@ -77,6 +117,7 @@ export interface CreateItemRequest {
 
 export interface ListItemsRequest {
   subjectId?: string;
+  periodId?: string;
   type?: ItemType;
   upcomingOnly?: boolean;
   limit?: number;
@@ -124,7 +165,9 @@ export interface UpsertScheduleSlotRequest {
   label?: string;
 }
 
-export interface ListScheduleRequest {}
+export interface ListScheduleRequest {
+  periodId?: string;
+}
 
 export interface ListScheduleResponse {
   slots: ScheduleSlot[];
@@ -136,6 +179,7 @@ export interface DeleteScheduleSlotRequest {
 
 export interface Note {
   id: string;
+  periodId: string;
   subjectId: string;
   title: string;
   body: string;
@@ -145,12 +189,14 @@ export interface Note {
 }
 
 export interface CreateNoteRequest {
+  periodId?: string;
   subjectId?: string;
   title: string;
   body?: string;
 }
 
 export interface ListNotesRequest {
+  periodId?: string;
   subjectId?: string;
   generalOnly?: boolean;
 }

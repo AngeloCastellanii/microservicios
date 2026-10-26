@@ -3,6 +3,12 @@ syntax = "proto3";
 package acadflow.academic;
 
 service AcademicService {
+  // Periodos (trimestre / semestre)
+  rpc CreatePeriod (CreatePeriodRequest) returns (Period);
+  rpc ListPeriods (ListPeriodsRequest) returns (ListPeriodsResponse);
+  rpc SetActivePeriod (SetActivePeriodRequest) returns (Period);
+  rpc DeletePeriod (DeletePeriodRequest) returns (DeleteResponse);
+
   // Materias
   rpc CreateSubject (CreateSubjectRequest) returns (Subject);
   rpc ListSubjects (ListSubjectsRequest) returns (ListSubjectsResponse);
@@ -10,7 +16,7 @@ service AcademicService {
   rpc UpdateSubject (UpdateSubjectRequest) returns (Subject);
   rpc DeleteSubject (DeleteSubjectRequest) returns (DeleteResponse);
 
-  // Ítems (tarea / proyecto / examen)
+  // Ítems
   rpc CreateItem (CreateItemRequest) returns (Item);
   rpc ListItems (ListItemsRequest) returns (ListItemsResponse);
   rpc GetItem (GetItemRequest) returns (Item);
@@ -27,6 +33,12 @@ service AcademicService {
   rpc ListNotes (ListNotesRequest) returns (ListNotesResponse);
   rpc UpdateNote (UpdateNoteRequest) returns (Note);
   rpc DeleteNote (DeleteNoteRequest) returns (DeleteResponse);
+}
+
+enum PeriodKind {
+  PERIOD_KIND_UNSPECIFIED = 0;
+  TRIMESTER = 1;
+  SEMESTER = 2;
 }
 
 enum ItemType {
@@ -48,22 +60,57 @@ message DeleteResponse {
   bool ok = 1;
 }
 
-message Subject {
+message Period {
   string id = 1;
   string name = 2;
-  string description = 3;
-  string color = 4;
-  string created_at = 5;
-  string updated_at = 6;
+  PeriodKind kind = 3;
+  int32 year = 4;
+  bool is_active = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreatePeriodRequest {
+  string name = 1;
+  PeriodKind kind = 2;
+  int32 year = 3;
+  bool set_active = 4;
+}
+
+message ListPeriodsRequest {}
+
+message ListPeriodsResponse {
+  repeated Period periods = 1;
+}
+
+message SetActivePeriodRequest {
+  string id = 1;
+}
+
+message DeletePeriodRequest {
+  string id = 1;
+}
+
+message Subject {
+  string id = 1;
+  string period_id = 2;
+  string name = 3;
+  string description = 4;
+  string color = 5;
+  string created_at = 6;
+  string updated_at = 7;
 }
 
 message CreateSubjectRequest {
-  string name = 1;
-  string description = 2;
-  string color = 3;
+  string period_id = 1;
+  string name = 2;
+  string description = 3;
+  string color = 4;
 }
 
-message ListSubjectsRequest {}
+message ListSubjectsRequest {
+  string period_id = 1;
+}
 
 message ListSubjectsResponse {
   repeated Subject subjects = 1;
@@ -108,9 +155,10 @@ message CreateItemRequest {
 
 message ListItemsRequest {
   string subject_id = 1;
-  ItemType type = 2;
-  bool upcoming_only = 3;
-  int32 limit = 4;
+  string period_id = 2;
+  ItemType type = 3;
+  bool upcoming_only = 4;
+  int32 limit = 5;
 }
 
 message ListItemsResponse {
@@ -155,7 +203,9 @@ message UpsertScheduleSlotRequest {
   string label = 6;
 }
 
-message ListScheduleRequest {}
+message ListScheduleRequest {
+  string period_id = 1;
+}
 
 message ListScheduleResponse {
   repeated ScheduleSlot slots = 1;
@@ -167,23 +217,26 @@ message DeleteScheduleSlotRequest {
 
 message Note {
   string id = 1;
-  string subject_id = 2;
-  string title = 3;
-  string body = 4;
-  string created_at = 5;
-  string updated_at = 6;
-  string subject_name = 7;
+  string period_id = 2;
+  string subject_id = 3;
+  string title = 4;
+  string body = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  string subject_name = 8;
 }
 
 message CreateNoteRequest {
-  string subject_id = 1;
-  string title = 2;
-  string body = 3;
+  string period_id = 1;
+  string subject_id = 2;
+  string title = 3;
+  string body = 4;
 }
 
 message ListNotesRequest {
-  string subject_id = 1;
-  bool general_only = 2;
+  string period_id = 1;
+  string subject_id = 2;
+  bool general_only = 3;
 }
 
 message ListNotesResponse {

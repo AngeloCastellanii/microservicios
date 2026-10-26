@@ -1,9 +1,11 @@
 import type {
   CreateItemRequest,
   CreateNoteRequest,
+  CreatePeriodRequest,
   CreateSubjectRequest,
   DeleteItemRequest,
   DeleteNoteRequest,
+  DeletePeriodRequest,
   DeleteResponse,
   DeleteScheduleSlotRequest,
   DeleteSubjectRequest,
@@ -14,12 +16,16 @@ import type {
   ListItemsResponse,
   ListNotesRequest,
   ListNotesResponse,
+  ListPeriodsRequest,
+  ListPeriodsResponse,
   ListScheduleRequest,
   ListScheduleResponse,
   ListSubjectsRequest,
   ListSubjectsResponse,
   Note,
+  Period,
   ScheduleSlot,
+  SetActivePeriodRequest,
   Subject,
   UpdateItemRequest,
   UpdateNoteRequest,
@@ -32,31 +38,101 @@ import { prisma } from "./db.js";
 import {
   mapItem,
   mapNote,
+  mapPeriod,
   mapSlot,
   mapSubject,
   toDbItemStatus,
   toDbItemType,
+  toDbPeriodKind,
 } from "./mappers.js";
 import { createPersistentReminder } from "./notifications-client.js";
 
 type Call<T> = grpc.ServerUnaryCall<T, unknown>;
 
 export const academicHandlers = {
-  async CreateSubject(call: Call<CreateSubjectRequest>): Promise<Subject> {
-    const { name, description, color } = call.request;
+  async CreatePeriod(call: Call<CreatePeriodRequest>): Promise<Period> {
+    const { name, kind, year, setActive } = call.request;
+    const dbKind = toDbPeriodKind(kind);
     if (!name?.trim()) throw invalidArgument("name is required");
-    const row = await prisma.subject.create({
+    if (!dbKind) throw invalidArgument("kind must be TRIMESTER or SEMESTER");
+    if (!year || year < 2000) throw invalidArgument("year is required");
+
+    if (setActive) {
+      await prisma.period.updateMany({ data: { isActive: false } });
+    }
+
+    const row = await prisma.period.create({
       data: {
         name: name.trim(),
+        kind: dbKind,
+        year,
+        isActive: Boolean(setActive),
+      },
+    });
+    return mapPeriod(row);
+  },
+
+  async ListPeriods(_call: Call<ListPeriodsRequest>): Promise<ListPeriodsResponse> {
+    const rows = await prisma.period.findMany({
+      orderBy: [{ year: "desc" }, { createdAt: "desc" }],
+    });
+    return { periods: rows.map(mapPeriod) };
+  },
+
+  async SetActivePeriod(call: Call<SetActivePeriodRequest>): Promise<Period> {
+    const existing = await prisma.period.findUnique({
+      where: { id: call.request.id },
+    });
+    if (!existing) throw notFound("Period not found");
+
+    await prisma.$transaction([
+      prisma.period.updateMany({ data: { isActive: false } }),
+      prisma.period.update({
+        where: { id: call.request.id },
+        data: { isActive: true },
+      }),
+    ]);
+
+    const row = await prisma.period.findUniqueOrThrow({
+      where: { id: call.request.id },
+    });
+    return mapPeriod(row);
+  },
+
+  async DeletePeriod(call: Call<DeletePeriodRequest>): Promise<DeleteResponse> {
+    try {
+      await prisma.period.delete({ where: { id: call.request.id } });
+      return { ok: true };
+    } catch {
+      throw notFound("Period not found");
+    }
+  },
+
+  async CreateSubject(call: Call<CreateSubjectRequest>): Promise<Subject> {
+    const { periodId, name, description, color } = call.request;
+    if (!periodId) throw invalidArgument("periodId is required");
+    if (!name?.trim()) throw invalidArgument("name is required");
+
+    const period = await prisma.period.findUnique({ where: { id: periodId } });
+    if (!period) throw notFound("Period not found");
+
+    const row = await prisma.subject.create({
+      data: {
+        periodId,
+        name: name.trim(),
         description: description ?? "",
-        color: color || "#0F766E",
+        color: color || "#0C3B2E",
       },
     });
     return mapSubject(row);
   },
 
-  async ListSubjects(_call: Call<ListSubjectsRequest>): Promise<ListSubjectsResponse> {
-    const rows = await prisma.subject.findMany({ orderBy: { name: "asc" } });
+  async ListSubjects(call: Call<ListSubjectsRequest>): Promise<ListSubjectsResponse> {
+    const { periodId } = call.request;
+    const rows = await prisma.subject.findMany({
+      where: periodId ? { periodId } : undefined,
+      orderBy: { name: "asc" },
+    });
     return { subjects: rows.map(mapSubject) };
   },
 
@@ -129,10 +205,11 @@ export const academicHandlers = {
   },
 
   async ListItems(call: Call<ListItemsRequest>): Promise<ListItemsResponse> {
-    const { subjectId, type, upcomingOnly, limit } = call.request;
+    const { subjectId, periodId, type, upcomingOnly, limit } = call.request;
     const rows = await prisma.item.findMany({
       where: {
         ...(subjectId ? { subjectId } : {}),
+        ...(periodId ? { subject: { periodId } } : {}),
         ...(toDbItemType(type) ? { type: toDbItemType(type) } : {}),
         ...(upcomingOnly
           ? { dueAt: { gte: new Date() }, status: { not: "DONE" } }
@@ -226,9 +303,11 @@ export const academicHandlers = {
   },
 
   async ListSchedule(
-    _call: Call<ListScheduleRequest>,
+    call: Call<ListScheduleRequest>,
   ): Promise<ListScheduleResponse> {
+    const { periodId } = call.request;
     const rows = await prisma.scheduleSlot.findMany({
+      where: periodId ? { subject: { periodId } } : undefined,
       include: { subject: true },
       orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
     });
@@ -247,14 +326,20 @@ export const academicHandlers = {
   },
 
   async CreateNote(call: Call<CreateNoteRequest>): Promise<Note> {
-    const { subjectId, title, body } = call.request;
+    const { periodId, subjectId, title, body } = call.request;
     if (!title?.trim()) throw invalidArgument("title is required");
+
+    let resolvedPeriodId = periodId || null;
     if (subjectId) {
       const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
       if (!subject) throw notFound("Subject not found");
+      resolvedPeriodId = subject.periodId;
     }
+    if (!resolvedPeriodId) throw invalidArgument("periodId is required");
+
     const row = await prisma.note.create({
       data: {
+        periodId: resolvedPeriodId,
         subjectId: subjectId || null,
         title: title.trim(),
         body: body ?? "",
@@ -265,13 +350,16 @@ export const academicHandlers = {
   },
 
   async ListNotes(call: Call<ListNotesRequest>): Promise<ListNotesResponse> {
-    const { subjectId, generalOnly } = call.request;
+    const { periodId, subjectId, generalOnly } = call.request;
     const rows = await prisma.note.findMany({
-      where: generalOnly
-        ? { subjectId: null }
-        : subjectId
-          ? { subjectId }
-          : undefined,
+      where: {
+        ...(periodId ? { periodId } : {}),
+        ...(generalOnly
+          ? { subjectId: null }
+          : subjectId
+            ? { subjectId }
+            : {}),
+      },
       include: { subject: true },
       orderBy: { updatedAt: "desc" },
     });

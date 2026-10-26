@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { api, type Notification } from "../api";
+import { EmptyState } from "../components/EmptyState";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { formatWhen, notifKindLabel } from "../labels";
 
 export function NotificationsPage() {
   const [items, setItems] = useState<Notification[]>([]);
@@ -15,60 +19,73 @@ export function NotificationsPage() {
 
   return (
     <>
-      <section className="hero">
-        <h1>Notificaciones</h1>
-        <p>Normales (informativas) y persistentes (recordatorios hasta descartar).</p>
-      </section>
+      <PageHeader
+        eyebrow="Recordatorios"
+        title="Avisos"
+        subtitle="Normales para info puntual. Persistentes hasta que los descartes."
+      />
       {error && <p className="error">{error}</p>}
 
       <section className="panel">
-        <div className="list">
-          {items.length === 0 && <p className="empty">No hay notificaciones.</p>}
-          {items.map((n) => (
-            <div className="row" key={n.id}>
-              <div>
-                <strong>{n.title}</strong>
-                <div className="meta">
-                  {n.body}
-                  {n.relatedItemTitle
-                    ? ` · ${n.relatedItemTitle}${n.relatedSubjectName ? ` (${n.relatedSubjectName})` : ""}`
-                    : ""}
+        {items.length === 0 ? (
+          <EmptyState
+            title="Sin avisos"
+            description="Cuando crees un ítem con fecha, Studyy generará un recordatorio persistente."
+            actionLabel="Ir a materias"
+            actionTo="/materias"
+          />
+        ) : (
+          <div className="list">
+            {items.map((n) => (
+              <article className="row" key={n.id}>
+                <div>
+                  <strong>{n.title}</strong>
+                  <div className="meta">
+                    {n.body}
+                    {n.relatedItemTitle
+                      ? ` · ${n.relatedItemTitle}${
+                          n.relatedSubjectName
+                            ? ` (${n.relatedSubjectName})`
+                            : ""
+                        }`
+                      : ""}
+                  </div>
+                  <div className="meta" style={{ marginTop: "0.25rem" }}>
+                    {formatWhen(n.createdAt)}
+                    {n.readAt ? " · leída" : " · sin leer"}
+                  </div>
                 </div>
-                <div className="meta">
-                  {new Date(n.createdAt).toLocaleString("es")}
-                  {n.readAt ? " · leída" : " · sin leer"}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-                <span className={`badge ${n.kind === "PERSISTENT" ? "persistent" : "normal"}`}>
-                  {n.kind === "PERSISTENT" ? "Persistente" : "Normal"}
-                </span>
-                {!n.readAt && (
+                <div className="chip-row">
+                  <StatusBadge tone={n.kind === "PERSISTENT" ? "info" : "ok"}>
+                    {notifKindLabel(n.kind)}
+                  </StatusBadge>
+                  {!n.readAt && (
+                    <button
+                      className="btn ghost sm"
+                      type="button"
+                      onClick={async () => {
+                        await api.markRead(n.id);
+                        await reload();
+                      }}
+                    >
+                      Marcar leída
+                    </button>
+                  )}
                   <button
-                    className="btn ghost"
+                    className="btn ghost sm"
                     type="button"
                     onClick={async () => {
-                      await api.markRead(n.id);
+                      await api.dismiss(n.id);
                       await reload();
                     }}
                   >
-                    Leer
+                    Descartar
                   </button>
-                )}
-                <button
-                  className="btn ghost"
-                  type="button"
-                  onClick={async () => {
-                    await api.dismiss(n.id);
-                    await reload();
-                  }}
-                >
-                  Descartar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </>
   );

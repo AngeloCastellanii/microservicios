@@ -3,15 +3,15 @@ import { academic, notifications } from "./clients.js";
 
 function grpcHttpStatus(code: number | undefined): number {
   switch (code) {
-    case 3: // INVALID_ARGUMENT
+    case 3:
       return 400;
-    case 5: // NOT_FOUND
+    case 5:
       return 404;
-    case 6: // ALREADY_EXISTS
+    case 6:
       return 409;
-    case 16: // UNAUTHENTICATED
+    case 16:
       return 401;
-    case 7: // PERMISSION_DENIED
+    case 7:
       return 403;
     default:
       return 500;
@@ -35,9 +35,29 @@ async function callOrReply<T>(
 export async function registerRoutes(app: FastifyInstance) {
   app.get("/health", async () => ({ ok: true, service: "gateway" }));
 
+  // Periods
+  app.get("/api/periods", async (_req, reply) =>
+    callOrReply(reply, () => academic.ListPeriods({})),
+  );
+  app.post<{ Body: Record<string, unknown> }>("/api/periods", async (req, reply) =>
+    callOrReply(reply, () => academic.CreatePeriod(req.body)),
+  );
+  app.post<{ Params: { id: string } }>(
+    "/api/periods/:id/activate",
+    async (req, reply) =>
+      callOrReply(reply, () => academic.SetActivePeriod({ id: req.params.id })),
+  );
+  app.delete<{ Params: { id: string } }>("/api/periods/:id", async (req, reply) =>
+    callOrReply(reply, () => academic.DeletePeriod({ id: req.params.id })),
+  );
+
   // Subjects
-  app.get("/api/subjects", async (_req, reply) =>
-    callOrReply(reply, () => academic.ListSubjects({})),
+  app.get<{ Querystring: Record<string, string> }>(
+    "/api/subjects",
+    async (req, reply) =>
+      callOrReply(reply, () =>
+        academic.ListSubjects({ periodId: req.query.periodId || "" }),
+      ),
   );
   app.post<{ Body: Record<string, unknown> }>("/api/subjects", async (req, reply) =>
     callOrReply(reply, () => academic.CreateSubject(req.body)),
@@ -61,6 +81,7 @@ export async function registerRoutes(app: FastifyInstance) {
     callOrReply(reply, () =>
       academic.ListItems({
         subjectId: req.query.subjectId || "",
+        periodId: req.query.periodId || "",
         type: req.query.type || "ITEM_TYPE_UNSPECIFIED",
         upcomingOnly: req.query.upcomingOnly === "true",
         limit: req.query.limit ? Number(req.query.limit) : 0,
@@ -85,8 +106,12 @@ export async function registerRoutes(app: FastifyInstance) {
   );
 
   // Schedule
-  app.get("/api/schedule", async (_req, reply) =>
-    callOrReply(reply, () => academic.ListSchedule({})),
+  app.get<{ Querystring: Record<string, string> }>(
+    "/api/schedule",
+    async (req, reply) =>
+      callOrReply(reply, () =>
+        academic.ListSchedule({ periodId: req.query.periodId || "" }),
+      ),
   );
   app.post<{ Body: Record<string, unknown> }>("/api/schedule", async (req, reply) =>
     callOrReply(reply, () => academic.UpsertScheduleSlot(req.body)),
@@ -99,6 +124,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get<{ Querystring: Record<string, string> }>("/api/notes", async (req, reply) =>
     callOrReply(reply, () =>
       academic.ListNotes({
+        periodId: req.query.periodId || "",
         subjectId: req.query.subjectId || "",
         generalOnly: req.query.generalOnly === "true",
       }),

@@ -12,8 +12,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+export type Period = {
+  id: string;
+  name: string;
+  kind: string;
+  year: number;
+  isActive: boolean;
+};
+
 export type Subject = {
   id: string;
+  periodId: string;
   name: string;
   description: string;
   color: string;
@@ -42,6 +51,7 @@ export type ScheduleSlot = {
 
 export type Note = {
   id: string;
+  periodId: string;
   subjectId: string;
   title: string;
   body: string;
@@ -60,27 +70,46 @@ export type Notification = {
   createdAt: string;
 };
 
+function withParams(params: Record<string, string | boolean | number | undefined>) {
+  const q = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== "" && v !== undefined && v !== false) q.set(k, String(v));
+  });
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
 export const api = {
-  listSubjects: () =>
-    request<{ subjects: Subject[] }>("/api/subjects").then((r) => r.subjects),
-  createSubject: (body: Partial<Subject>) =>
+  listPeriods: () =>
+    request<{ periods: Period[] }>("/api/periods").then((r) => r.periods),
+  createPeriod: (body: Record<string, unknown>) =>
+    request<Period>("/api/periods", { method: "POST", body: JSON.stringify(body) }),
+  activatePeriod: (id: string) =>
+    request<Period>(`/api/periods/${id}/activate`, { method: "POST" }),
+  deletePeriod: (id: string) =>
+    request(`/api/periods/${id}`, { method: "DELETE" }),
+
+  listSubjects: (periodId?: string) =>
+    request<{ subjects: Subject[] }>(
+      `/api/subjects${withParams({ periodId })}`,
+    ).then((r) => r.subjects),
+  createSubject: (body: Record<string, unknown>) =>
     request<Subject>("/api/subjects", { method: "POST", body: JSON.stringify(body) }),
   deleteSubject: (id: string) =>
     request(`/api/subjects/${id}`, { method: "DELETE" }),
 
-  listItems: (params: Record<string, string | boolean | number> = {}) => {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== "" && v !== undefined && v !== false) q.set(k, String(v));
-    });
-    return request<{ items: Item[] }>(`/api/items?${q}`).then((r) => r.items);
-  },
+  listItems: (params: Record<string, string | boolean | number> = {}) =>
+    request<{ items: Item[] }>(`/api/items${withParams(params)}`).then(
+      (r) => r.items,
+    ),
   createItem: (body: Record<string, unknown>) =>
     request<Item>("/api/items", { method: "POST", body: JSON.stringify(body) }),
   deleteItem: (id: string) => request(`/api/items/${id}`, { method: "DELETE" }),
 
-  listSchedule: () =>
-    request<{ slots: ScheduleSlot[] }>("/api/schedule").then((r) => r.slots),
+  listSchedule: (periodId?: string) =>
+    request<{ slots: ScheduleSlot[] }>(
+      `/api/schedule${withParams({ periodId })}`,
+    ).then((r) => r.slots),
   upsertSlot: (body: Record<string, unknown>) =>
     request<ScheduleSlot>("/api/schedule", {
       method: "POST",
@@ -89,13 +118,10 @@ export const api = {
   deleteSlot: (id: string) =>
     request(`/api/schedule/${id}`, { method: "DELETE" }),
 
-  listNotes: (params: Record<string, string | boolean> = {}) => {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== "" && v !== undefined && v !== false) q.set(k, String(v));
-    });
-    return request<{ notes: Note[] }>(`/api/notes?${q}`).then((r) => r.notes);
-  },
+  listNotes: (params: Record<string, string | boolean> = {}) =>
+    request<{ notes: Note[] }>(`/api/notes${withParams(params)}`).then(
+      (r) => r.notes,
+    ),
   createNote: (body: Record<string, unknown>) =>
     request<Note>("/api/notes", { method: "POST", body: JSON.stringify(body) }),
   deleteNote: (id: string) => request(`/api/notes/${id}`, { method: "DELETE" }),

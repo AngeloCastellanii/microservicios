@@ -13,24 +13,33 @@ async function main() {
   await prisma.scheduleSlot.deleteMany();
   await prisma.item.deleteMany();
   await prisma.subject.deleteMany();
+  await prisma.period.deleteMany();
+
+  const period = await prisma.period.create({
+    data: {
+      name: "Trimestre 11 · 2026",
+      kind: "TRIMESTER",
+      year: 2026,
+      isActive: true,
+    },
+  });
 
   const sd = await prisma.subject.create({
     data: {
+      periodId: period.id,
       name: "Sistemas Distribuidos",
       description: "gRPC, microservicios y coordinación",
-      color: "#0F766E",
+      color: "#0C3B2E",
     },
   });
   const bd = await prisma.subject.create({
     data: {
+      periodId: period.id,
       name: "Bases de Datos",
       description: "Modelado y consultas",
-      color: "#1D4E89",
+      color: "#1F5F7A",
     },
   });
-
-  const due = new Date();
-  due.setDate(due.getDate() + 2);
 
   await prisma.item.createMany({
     data: [
@@ -39,7 +48,7 @@ async function main() {
         title: "Entrega RPC",
         type: "TASK",
         status: "PENDING",
-        dueAt: due,
+        dueAt: new Date(Date.now() + 2 * 86400000),
       },
       {
         subjectId: sd.id,
@@ -94,18 +103,20 @@ async function main() {
   await prisma.note.createMany({
     data: [
       {
+        periodId: period.id,
         subjectId: sd.id,
         title: "Wrapper gRPC",
         body: "Reutilizar createGrpcServer/createGrpcClient en ambos servicios.",
       },
       {
+        periodId: period.id,
         title: "Recordatorio general",
         body: "Levantar Docker antes de pnpm dev:db",
       },
     ],
   });
 
-  console.log("Academic seed OK");
+  console.log("Academic seed OK · period", period.id);
 }
 
 main()

@@ -2,7 +2,7 @@
   "name": "acadflow",
   "private": true,
   "version": "0.1.0",
-  "description": "Plataforma académica con microservicios gRPC (AcadFlow)",
+  "description": "Studyy — plataforma académica con microservicios gRPC",
   "scripts": {
     "build": "pnpm -r --filter @acadflow/proto --filter @acadflow/shared --filter @acadflow/rpc-wrapper run build",
     "build:proto": "pnpm --filter @acadflow/proto build",
@@ -12,6 +12,8 @@
     "db:generate": "pnpm --filter @acadflow/academic db:generate && pnpm --filter @acadflow/notifications db:generate",
     "db:push": "pnpm --filter @acadflow/academic db:push && pnpm --filter @acadflow/notifications db:push",
     "db:seed": "pnpm --filter @acadflow/academic db:seed && pnpm --filter @acadflow/notifications db:seed",
+    "db:setup": "pnpm db:generate && pnpm db:push && pnpm db:seed",
+
     "dev:academic": "pnpm --filter @acadflow/academic dev",
     "dev:notifications": "pnpm --filter @acadflow/notifications dev",
     "dev:gateway": "pnpm --filter @acadflow/gateway dev",

@@ -1,25 +1,40 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type Note, type Subject } from "../api";
+import { EmptyState } from "../components/EmptyState";
+import { PageHeader } from "../components/PageHeader";
+import { usePeriod } from "../period-context";
 
 export function NotesPage() {
+  const { current } = usePeriod();
   const [notes, setNotes] = useState<Note[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ title: "", body: "", subjectId: "" });
 
   async function reload() {
-    const [n, s] = await Promise.all([api.listNotes(), api.listSubjects()]);
+    if (!current) {
+      setNotes([]);
+      setSubjects([]);
+      return;
+    }
+    const [n, s] = await Promise.all([
+      api.listNotes({ periodId: current.id }),
+      api.listSubjects(current.id),
+    ]);
     setNotes(n);
     setSubjects(s);
   }
 
   useEffect(() => {
     reload().catch((err: Error) => setError(err.message));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!current) return;
     await api.createNote({
+      periodId: current.id,
       title: form.title,
       body: form.body,
       subjectId: form.subjectId || undefined,
@@ -28,52 +43,87 @@ export function NotesPage() {
     await reload();
   }
 
+  if (!current) {
+    return (
+      <>
+        <PageHeader eyebrow="Memoria" title="Apuntes" />
+        <EmptyState
+          title="Selecciona un periodo"
+          description="Los apuntes quedan asociados al trimestre o semestre activo."
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      <section className="hero">
-        <h1>Apuntes</h1>
-        <p>Notas generales o asociadas a una materia.</p>
-      </section>
+      <PageHeader
+        eyebrow="Memoria"
+        title="Apuntes"
+        subtitle={`Notas de ${current.name}`}
+      />
       {error && <p className="error">{error}</p>}
 
       <div className="grid-2">
         <section className="panel">
-          <h2>Lista</h2>
-          <div className="list">
-            {notes.length === 0 && <p className="empty">Sin apuntes aún.</p>}
-            {notes.map((n) => (
-              <div className="row" key={n.id}>
-                <div>
-                  <strong>{n.title}</strong>
-                  <div className="meta">
-                    {n.subjectName || "General"} · {n.body.slice(0, 80)}
-                  </div>
-                </div>
-                <button
-                  className="btn ghost"
-                  type="button"
-                  onClick={async () => {
-                    await api.deleteNote(n.id);
-                    await reload();
-                  }}
-                >
-                  Eliminar
-                </button>
-              </div>
-            ))}
+          <div className="panel-head">
+            <h2>Guardados</h2>
           </div>
+          {notes.length === 0 ? (
+            <EmptyState
+              title="Sin apuntes"
+              description="Guarda un recordatorio rápido o un resumen de clase."
+            />
+          ) : (
+            <div className="list">
+              {notes.map((n) => (
+                <article className="row" key={n.id}>
+                  <div>
+                    <strong>{n.title}</strong>
+                    <div className="meta">
+                      {n.subjectName || "General"}
+                      {n.body ? ` · ${n.body.slice(0, 90)}` : ""}
+                    </div>
+                  </div>
+                  <button
+                    className="btn ghost sm"
+                    type="button"
+                    aria-label={`Eliminar apunte ${n.title}`}
+                    onClick={async () => {
+                      await api.deleteNote(n.id);
+                      await reload();
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
-        <form className="panel" onSubmit={onSubmit}>
-          <h2>Nuevo apunte</h2>
-          <div className="form-row">
+        <form
+          className="panel form-stack"
+          style={{ marginTop: 0 }}
+          onSubmit={onSubmit}
+        >
+          <div className="panel-head">
+            <h2>Nuevo apunte</h2>
+          </div>
+          <div className="field">
+            <label htmlFor="note-title">Título</label>
             <input
-              placeholder="Título"
+              id="note-title"
+              placeholder="Idea clave"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
             />
+          </div>
+          <div className="field">
+            <label htmlFor="note-subject">Materia</label>
             <select
+              id="note-subject"
               value={form.subjectId}
               onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
             >
@@ -85,14 +135,17 @@ export function NotesPage() {
               ))}
             </select>
           </div>
-          <textarea
-            style={{ marginTop: "0.65rem" }}
-            placeholder="Contenido"
-            value={form.body}
-            onChange={(e) => setForm({ ...form, body: e.target.value })}
-          />
-          <button className="btn" type="submit" style={{ marginTop: "0.75rem" }}>
-            Guardar
+          <div className="field">
+            <label htmlFor="note-body">Contenido</label>
+            <textarea
+              id="note-body"
+              placeholder="Escribe aquí…"
+              value={form.body}
+              onChange={(e) => setForm({ ...form, body: e.target.value })}
+            />
+          </div>
+          <button className="btn" type="submit">
+            Guardar apunte
           </button>
         </form>
       </div>

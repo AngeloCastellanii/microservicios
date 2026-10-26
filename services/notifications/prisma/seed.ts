@@ -14,8 +14,8 @@ async function main() {
     data: [
       {
         kind: "NORMAL",
-        title: "Bienvenido a AcadFlow",
-        body: "Microservicios academic ↔ notifications listos.",
+        title: "Bienvenido",
+        body: "Microservicios academic y notifications listos.",
       },
       {
         kind: "PERSISTENT",
