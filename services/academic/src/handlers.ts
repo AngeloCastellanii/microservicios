@@ -31,8 +31,8 @@ import type {
   UpdateNoteRequest,
   UpdateSubjectRequest,
   UpsertScheduleSlotRequest,
-} from "@acadflow/proto";
-import { invalidArgument, notFound } from "@acadflow/rpc-wrapper";
+} from "@studyy/proto";
+import { invalidArgument, notFound } from "@studyy/rpc-wrapper";
 import type * as grpc from "@grpc/grpc-js";
 import { prisma } from "./db.js";
 import {

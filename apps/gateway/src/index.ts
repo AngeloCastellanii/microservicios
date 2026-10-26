@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
 import dotenv from "dotenv";
 import Fastify from "fastify";
-import { createLogger } from "@acadflow/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@acadflow/shared";
+import { createLogger } from "@studyy/rpc-wrapper";
+import { DEFAULT_PORTS, envInt } from "@studyy/shared";
 import { registerRoutes } from "./routes.js";
 
 const root = path.resolve(

@@ -15,7 +15,7 @@ export type ServiceImplementation = Record<
 export interface CreateGrpcServerOptions {
   serviceName: string;
   port: number;
-  /** Objeto de servicio del package definition, ej. proto.acadflow.academic.AcademicService */
+  /** Definición del servicio gRPC (package definition cargado desde .proto). */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   serviceDefinition: grpc.ServiceDefinition<any> | object;
   implementation: ServiceImplementation;

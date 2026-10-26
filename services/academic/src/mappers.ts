@@ -7,7 +7,7 @@ import type {
   PeriodKind,
   ScheduleSlot,
   Subject,
-} from "@acadflow/proto";
+} from "@studyy/proto";
 import type {
   Item as DbItem,
   ItemStatus as DbItemStatus,

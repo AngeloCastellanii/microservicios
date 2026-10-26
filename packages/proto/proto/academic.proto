@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package acadflow.academic;
+package studyy.academic;
 
 service AcademicService {
   // Periodos (trimestre / semestre)

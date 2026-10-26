@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package acadflow.notifications;
+package studyy.notifications;
 
 service NotificationService {
   rpc CreateNotification (CreateNotificationRequest) returns (Notification);

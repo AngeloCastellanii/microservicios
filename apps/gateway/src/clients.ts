@@ -1,16 +1,16 @@
 import {
   loadAcademicPackage,
   loadNotificationsPackage,
-} from "@acadflow/proto";
-import { createGrpcClient, createLogger } from "@acadflow/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@acadflow/shared";
+} from "@studyy/proto";
+import { createGrpcClient, createLogger } from "@studyy/rpc-wrapper";
+import { DEFAULT_PORTS, envInt } from "@studyy/shared";
 import type * as grpc from "@grpc/grpc-js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyClient = grpc.Client & Record<string, any>;
 
 const academicPkg = loadAcademicPackage() as unknown as {
-  acadflow: {
+  studyy: {
     academic: {
       AcademicService: new (
         address: string,
@@ -21,7 +21,7 @@ const academicPkg = loadAcademicPackage() as unknown as {
 };
 
 const notificationsPkg = loadNotificationsPackage() as unknown as {
-  acadflow: {
+  studyy: {
     notifications: {
       NotificationService: new (
         address: string,
@@ -42,13 +42,13 @@ const notificationsHost = process.env.NOTIFICATIONS_GRPC_HOST ?? "127.0.0.1";
 export const academic = createGrpcClient<AnyClient>({
   serviceName: "academic",
   address: `${academicHost}:${academicPort}`,
-  ClientConstructor: academicPkg.acadflow.academic.AcademicService,
+  ClientConstructor: academicPkg.studyy.academic.AcademicService,
   logger: createLogger("gateway→academic"),
 });
 
 export const notifications = createGrpcClient<AnyClient>({
   serviceName: "notifications",
   address: `${notificationsHost}:${notificationsPort}`,
-  ClientConstructor: notificationsPkg.acadflow.notifications.NotificationService,
+  ClientConstructor: notificationsPkg.studyy.notifications.NotificationService,
   logger: createLogger("gateway→notifications"),
 });

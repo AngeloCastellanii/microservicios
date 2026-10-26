@@ -17,7 +17,7 @@ Ida y vuelta:
 ## Stack
 
 - Node.js + TypeScript + PNPM
-- gRPC + `@acadflow/rpc-wrapper` (reutilizable)
+- gRPC + `@studyy/rpc-wrapper` (reutilizable)
 - PostgreSQL (Docker)
 - Prisma
 - Fastify + React/Vite
@@ -80,4 +80,6 @@ En **Perfil** configuras datos personales, periodo académico (trimestre/semestr
 ## Demo de RPC bidireccional
 
 1. Crea un ítem con fecha en **Materias** → academic llama a notifications.
-2. Abre **Avisos** → notifications llama a academic (`GetItem`) para mostrar título/materia.
+2. Abre **Perfil → Avisos** → notifications llama a academic (`GetItem`) para mostrar título/materia.
+
+Detalle de requisitos del curso: [docs/REQUISITOS.md](docs/REQUISITOS.md).

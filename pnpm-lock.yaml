@@ -20,21 +20,21 @@ importers:
 
   apps/gateway:
     dependencies:
-      '@acadflow/proto':
-        specifier: workspace:*
-        version: link:../../packages/proto
-      '@acadflow/rpc-wrapper':
-        specifier: workspace:*
-        version: link:../../packages/rpc-wrapper
-      '@acadflow/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@fastify/cors':
         specifier: ^11.0.1
         version: 11.3.1
       '@grpc/grpc-js':
         specifier: ^1.13.4
         version: 1.14.6
+      '@studyy/proto':
+        specifier: workspace:*
+        version: link:../../packages/proto
+      '@studyy/rpc-wrapper':
+        specifier: workspace:*
+        version: link:../../packages/rpc-wrapper
+      '@studyy/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -98,15 +98,15 @@ importers:
 
   packages/rpc-wrapper:
     dependencies:
-      '@acadflow/proto':
-        specifier: workspace:*
-        version: link:../proto
       '@grpc/grpc-js':
         specifier: ^1.13.4
         version: 1.14.6
       '@grpc/proto-loader':
         specifier: ^0.7.15
         version: 0.7.15
+      '@studyy/proto':
+        specifier: workspace:*
+        version: link:../proto
     devDependencies:
       '@types/node':
         specifier: ^22.15.3
@@ -126,21 +126,21 @@ importers:
 
   services/academic:
     dependencies:
-      '@acadflow/proto':
-        specifier: workspace:*
-        version: link:../../packages/proto
-      '@acadflow/rpc-wrapper':
-        specifier: workspace:*
-        version: link:../../packages/rpc-wrapper
-      '@acadflow/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@grpc/grpc-js':
         specifier: ^1.13.4
         version: 1.14.6
       '@prisma/client':
         specifier: ^6.8.2
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@studyy/proto':
+        specifier: workspace:*
+        version: link:../../packages/proto
+      '@studyy/rpc-wrapper':
+        specifier: workspace:*
+        version: link:../../packages/rpc-wrapper
+      '@studyy/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -160,21 +160,21 @@ importers:
 
   services/notifications:
     dependencies:
-      '@acadflow/proto':
-        specifier: workspace:*
-        version: link:../../packages/proto
-      '@acadflow/rpc-wrapper':
-        specifier: workspace:*
-        version: link:../../packages/rpc-wrapper
-      '@acadflow/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@grpc/grpc-js':
         specifier: ^1.13.4
         version: 1.14.6
       '@prisma/client':
         specifier: ^6.8.2
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@studyy/proto':
+        specifier: workspace:*
+        version: link:../../packages/proto
+      '@studyy/rpc-wrapper':
+        specifier: workspace:*
+        version: link:../../packages/rpc-wrapper
+      '@studyy/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1

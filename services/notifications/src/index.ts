@@ -1,9 +1,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
-import { loadNotificationsPackage } from "@acadflow/proto";
-import { createGrpcServer, createLogger } from "@acadflow/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@acadflow/shared";
+import { loadNotificationsPackage } from "@studyy/proto";
+import { createGrpcServer, createLogger } from "@studyy/rpc-wrapper";
+import { DEFAULT_PORTS, envInt } from "@studyy/shared";
 import type * as grpc from "@grpc/grpc-js";
 import { prisma } from "./db.js";
 import { notificationHandlers } from "./handlers.js";
@@ -18,7 +18,7 @@ const logger = createLogger("notifications");
 
 async function main() {
   const pkg = loadNotificationsPackage() as unknown as {
-    acadflow: {
+    studyy: {
       notifications: {
         NotificationService: { service: grpc.ServiceDefinition };
       };
@@ -33,7 +33,7 @@ async function main() {
   const handle = await createGrpcServer({
     serviceName: "notifications",
     port,
-    serviceDefinition: pkg.acadflow.notifications.NotificationService.service,
+    serviceDefinition: pkg.studyy.notifications.NotificationService.service,
     implementation: notificationHandlers,
     logger,
   });

@@ -1,5 +1,5 @@
 {
-  "name": "@acadflow/notifications",
+  "name": "@studyy/notifications",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,9 +14,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@acadflow/proto": "workspace:*",
-    "@acadflow/rpc-wrapper": "workspace:*",
-    "@acadflow/shared": "workspace:*",
+    "@studyy/proto": "workspace:*",
+    "@studyy/rpc-wrapper": "workspace:*",
+    "@studyy/shared": "workspace:*",
     "@grpc/grpc-js": "^1.13.4",
     "@prisma/client": "^6.8.2",
     "dotenv": "^16.5.0"

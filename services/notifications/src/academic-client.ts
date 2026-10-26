@@ -1,6 +1,6 @@
-import { loadAcademicPackage } from "@acadflow/proto";
-import { createGrpcClient, createLogger } from "@acadflow/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@acadflow/shared";
+import { loadAcademicPackage } from "@studyy/proto";
+import { createGrpcClient, createLogger } from "@studyy/rpc-wrapper";
+import { DEFAULT_PORTS, envInt } from "@studyy/shared";
 import type * as grpc from "@grpc/grpc-js";
 
 const logger = createLogger("notifications→academic");
@@ -15,7 +15,7 @@ export function getAcademicClient() {
   if (client) return client;
 
   const pkg = loadAcademicPackage() as unknown as {
-    acadflow: {
+    studyy: {
       academic: {
         AcademicService: new (
           address: string,
@@ -31,7 +31,7 @@ export function getAcademicClient() {
   client = createGrpcClient<AcademicClient>({
     serviceName: "academic",
     address: `${host}:${port}`,
-    ClientConstructor: pkg.acadflow.academic.AcademicService,
+    ClientConstructor: pkg.studyy.academic.AcademicService,
     logger,
   });
 

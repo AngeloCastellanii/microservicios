@@ -1,5 +1,5 @@
 {
-  "name": "@acadflow/gateway",
+  "name": "@studyy/gateway",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,9 +10,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@acadflow/proto": "workspace:*",
-    "@acadflow/rpc-wrapper": "workspace:*",
-    "@acadflow/shared": "workspace:*",
+    "@studyy/proto": "workspace:*",
+    "@studyy/rpc-wrapper": "workspace:*",
+    "@studyy/shared": "workspace:*",
     "@fastify/cors": "^11.0.1",
     "@grpc/grpc-js": "^1.13.4",
     "dotenv": "^16.5.0",

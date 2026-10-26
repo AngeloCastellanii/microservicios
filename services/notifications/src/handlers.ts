@@ -7,8 +7,8 @@ import type {
   MarkReadRequest,
   Notification,
   NotificationKind,
-} from "@acadflow/proto";
-import { invalidArgument, notFound } from "@acadflow/rpc-wrapper";
+} from "@studyy/proto";
+import { invalidArgument, notFound } from "@studyy/rpc-wrapper";
 import type { NotificationKind as DbKind } from "./generated/prisma/index.js";
 import type * as grpc from "@grpc/grpc-js";
 import { enrichFromItem } from "./academic-client.js";

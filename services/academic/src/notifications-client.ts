@@ -1,8 +1,8 @@
 import {
   loadNotificationsPackage,
-} from "@acadflow/proto";
-import { createGrpcClient, createLogger } from "@acadflow/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@acadflow/shared";
+} from "@studyy/proto";
+import { createGrpcClient, createLogger } from "@studyy/rpc-wrapper";
+import { DEFAULT_PORTS, envInt } from "@studyy/shared";
 import type * as grpc from "@grpc/grpc-js";
 
 const logger = createLogger("academic→notifications");
@@ -18,7 +18,7 @@ export function getNotificationsClient() {
   if (client) return client;
 
   const pkg = loadNotificationsPackage() as unknown as {
-    acadflow: {
+    studyy: {
       notifications: {
         NotificationService: new (
           address: string,
@@ -34,7 +34,7 @@ export function getNotificationsClient() {
   client = createGrpcClient<NotificationClient>({
     serviceName: "notifications",
     address: `${host}:${port}`,
-    ClientConstructor: pkg.acadflow.notifications.NotificationService,
+    ClientConstructor: pkg.studyy.notifications.NotificationService,
     logger,
   });
 

@@ -1,9 +1,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
-import { loadAcademicPackage } from "@acadflow/proto";
-import { createGrpcServer, createLogger } from "@acadflow/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@acadflow/shared";
+import { loadAcademicPackage } from "@studyy/proto";
+import { createGrpcServer, createLogger } from "@studyy/rpc-wrapper";
+import { DEFAULT_PORTS, envInt } from "@studyy/shared";
 import type * as grpc from "@grpc/grpc-js";
 import { academicHandlers } from "./handlers.js";
 import { prisma } from "./db.js";
@@ -15,7 +15,7 @@ const logger = createLogger("academic");
 
 async function main() {
   const pkg = loadAcademicPackage() as unknown as {
-    acadflow: {
+    studyy: {
       academic: {
         AcademicService: { service: grpc.ServiceDefinition };
       };
@@ -27,7 +27,7 @@ async function main() {
   const handle = await createGrpcServer({
     serviceName: "academic",
     port,
-    serviceDefinition: pkg.acadflow.academic.AcademicService.service,
+    serviceDefinition: pkg.studyy.academic.AcademicService.service,
     implementation: academicHandlers,
     logger,
   });

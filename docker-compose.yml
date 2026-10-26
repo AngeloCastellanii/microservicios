@@ -1,22 +1,22 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: acadflow-postgres
+    container_name: studyy-postgres
     restart: unless-stopped
     ports:
       - "5434:5432"
     environment:
-      POSTGRES_USER: acadflow
-      POSTGRES_PASSWORD: acadflow
+      POSTGRES_USER: studyy
+      POSTGRES_PASSWORD: studyy
       POSTGRES_DB: academic
     volumes:
-      - acadflow_pg_data:/var/lib/postgresql/data
+      - studyy_pg_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U acadflow -d academic"]
+      test: ["CMD-SHELL", "pg_isready -U studyy -d academic"]
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
-  acadflow_pg_data:
+  studyy_pg_data:
