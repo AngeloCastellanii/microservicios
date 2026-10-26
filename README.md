@@ -82,4 +82,4 @@ En **Perfil** configuras datos personales, periodo académico (trimestre/semestr
 1. Crea un ítem con fecha en **Materias** → academic llama a notifications.
 2. Abre **Perfil → Avisos** → notifications llama a academic (`GetItem`) para mostrar título/materia.
 
-Detalle de requisitos del curso: [docs/REQUISITOS.md](docs/REQUISITOS.md).
+Explicación de microservicios / gRPC / wrapper: [docs/MICROSERVICIOS.md](docs/MICROSERVICIOS.md).
