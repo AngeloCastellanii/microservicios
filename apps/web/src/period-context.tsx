@@ -16,7 +16,7 @@ type PeriodContextValue = {
   current: Period | null;
   loading: boolean;
   error: string;
-  setCurrentId: (id: string) => void;
+  setCurrentId: (id: string) => void | Promise<void>;
   refresh: () => Promise<void>;
   createPeriod: (input: {
     name: string;
@@ -60,9 +60,13 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, [refresh]);
 
-  const setCurrentId = (id: string) => {
+  const setCurrentId = async (id: string) => {
     setCurrentIdState(id);
     localStorage.setItem(STORAGE_KEY, id);
+    if (id) {
+      await api.activatePeriod(id).catch(() => undefined);
+      await refresh();
+    }
   };
 
   const createPeriod = async (input: {
@@ -73,7 +77,8 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
     const created = await api.createPeriod({ ...input, setActive: true });
     await api.activatePeriod(created.id).catch(() => undefined);
     await refresh();
-    setCurrentId(created.id);
+    setCurrentIdState(created.id);
+    localStorage.setItem(STORAGE_KEY, created.id);
   };
 
   const removePeriod = async (id: string) => {

@@ -8,23 +8,10 @@ dotenv.config({ path: path.join(root, ".env") });
 
 const prisma = new PrismaClient();
 
+/** Limpia notificaciones. Sin avisos de demo. */
 async function main() {
   await prisma.notification.deleteMany();
-  await prisma.notification.createMany({
-    data: [
-      {
-        kind: "NORMAL",
-        title: "Bienvenido",
-        body: "Microservicios academic y notifications listos.",
-      },
-      {
-        kind: "PERSISTENT",
-        title: "Recordatorio de demo",
-        body: "Prepara la demo de ida y vuelta gRPC para clase.",
-      },
-    ],
-  });
-  console.log("Notifications seed OK");
+  console.log("Notifications seed OK · BD vacía");
 }
 
 main()

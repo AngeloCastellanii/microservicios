@@ -58,33 +58,49 @@ export function SubjectsPage() {
   async function onCreateSubject(e: FormEvent) {
     e.preventDefault();
     if (!current) return;
-    const created = await api.createSubject({
-      ...subjectForm,
-      periodId: current.id,
-    });
-    setSubjectForm({ name: "", description: "" });
-    await reloadSubjects(created.id);
+    try {
+      setError("");
+      const created = await api.createSubject({
+        ...subjectForm,
+        periodId: current.id,
+      });
+      setSubjectForm({ name: "", description: "" });
+      await reloadSubjects(created.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear la materia");
+    }
   }
 
   async function onDeleteSubject(id: string) {
     if (!confirm("¿Eliminar esta materia y todos sus ítems?")) return;
-    await api.deleteSubject(id);
-    setSelectedId("");
-    await reloadSubjects();
+    try {
+      setError("");
+      await api.deleteSubject(id);
+      setSelectedId("");
+      setItems([]);
+      await reloadSubjects();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo eliminar la materia");
+    }
   }
 
   async function onCreateItem(e: FormEvent) {
     e.preventDefault();
     if (!selectedId) return;
-    await api.createItem({
-      subjectId: selectedId,
-      title: itemForm.title,
-      type: itemForm.type,
-      dueAt: itemForm.dueAt ? new Date(itemForm.dueAt).toISOString() : "",
-      status: itemForm.type === "EXAM" ? "SCHEDULED" : "PENDING",
-    });
-    setItemForm({ title: "", type: "TASK", dueAt: "" });
-    setItems(await api.listItems({ subjectId: selectedId }));
+    try {
+      setError("");
+      await api.createItem({
+        subjectId: selectedId,
+        title: itemForm.title,
+        type: itemForm.type,
+        dueAt: itemForm.dueAt ? new Date(itemForm.dueAt).toISOString() : "",
+        status: itemForm.type === "EXAM" ? "SCHEDULED" : "PENDING",
+      });
+      setItemForm({ title: "", type: "TASK", dueAt: "" });
+      setItems(await api.listItems({ subjectId: selectedId }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear el ítem");
+    }
   }
 
   const selected = subjects.find((s) => s.id === selectedId);
@@ -140,7 +156,10 @@ export function SubjectsPage() {
                     className="btn ghost sm"
                     type="button"
                     aria-label={`Eliminar ${s.name}`}
-                    onClick={() => onDeleteSubject(s.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void onDeleteSubject(s.id);
+                    }}
                   >
                     Eliminar
                   </button>
@@ -220,8 +239,19 @@ export function SubjectsPage() {
                       type="button"
                       aria-label={`Eliminar ${item.title}`}
                       onClick={async () => {
-                        await api.deleteItem(item.id);
-                        setItems(await api.listItems({ subjectId: selectedId }));
+                        try {
+                          setError("");
+                          await api.deleteItem(item.id);
+                          setItems(
+                            await api.listItems({ subjectId: selectedId }),
+                          );
+                        } catch (err) {
+                          setError(
+                            err instanceof Error
+                              ? err.message
+                              : "No se pudo eliminar el ítem",
+                          );
+                        }
                       }}
                     >
                       Eliminar
