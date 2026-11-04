@@ -70,7 +70,9 @@ export type Notification = {
   createdAt: string;
 };
 
-function withParams(params: Record<string, string | boolean | number | undefined>) {
+function withParams(
+  params: Record<string, string | boolean | number | undefined>,
+) {
   const q = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
     if (v !== "" && v !== undefined && v !== false) q.set(k, String(v));
@@ -83,18 +85,28 @@ export const api = {
   listPeriods: () =>
     request<{ periods: Period[] }>("/api/periods").then((r) => r.periods),
   createPeriod: (body: Record<string, unknown>) =>
-    request<Period>("/api/periods", { method: "POST", body: JSON.stringify(body) }),
+    request<Period>("/api/periods", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   activatePeriod: (id: string) =>
     request<Period>(`/api/periods/${id}/activate`, { method: "POST" }),
-  deletePeriod: (id: string) =>
-    request(`/api/periods/${id}`, { method: "DELETE" }),
+  deletePeriod: (id: string) => request(`/api/periods/${id}`, { method: "DELETE" }),
 
   listSubjects: (periodId?: string) =>
     request<{ subjects: Subject[] }>(
       `/api/subjects${withParams({ periodId })}`,
     ).then((r) => r.subjects),
   createSubject: (body: Record<string, unknown>) =>
-    request<Subject>("/api/subjects", { method: "POST", body: JSON.stringify(body) }),
+    request<Subject>("/api/subjects", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateSubject: (id: string, body: Record<string, unknown>) =>
+    request<Subject>(`/api/subjects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
   deleteSubject: (id: string) =>
     request(`/api/subjects/${id}`, { method: "DELETE" }),
 
@@ -104,6 +116,11 @@ export const api = {
     ),
   createItem: (body: Record<string, unknown>) =>
     request<Item>("/api/items", { method: "POST", body: JSON.stringify(body) }),
+  updateItem: (id: string, body: Record<string, unknown>) =>
+    request<Item>(`/api/items/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
   deleteItem: (id: string) => request(`/api/items/${id}`, { method: "DELETE" }),
 
   listSchedule: (periodId?: string) =>
@@ -124,6 +141,11 @@ export const api = {
     ),
   createNote: (body: Record<string, unknown>) =>
     request<Note>("/api/notes", { method: "POST", body: JSON.stringify(body) }),
+  updateNote: (id: string, body: Record<string, unknown>) =>
+    request<Note>(`/api/notes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
   deleteNote: (id: string) => request(`/api/notes/${id}`, { method: "DELETE" }),
 
   listNotifications: () =>

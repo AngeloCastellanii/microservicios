@@ -60,8 +60,8 @@ export function App() {
             <NavLink to="/" end onClick={closeMenu}>
               Inicio
             </NavLink>
-            <NavLink to="/materias" onClick={closeMenu}>
-              Materias
+            <NavLink to="/cursos" onClick={closeMenu}>
+              Cursos
             </NavLink>
             <NavLink to="/horario" onClick={closeMenu}>
               Horario
@@ -92,6 +92,7 @@ export function App() {
       <main id="contenido">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/cursos" element={<SubjectsPage />} />
           <Route path="/materias" element={<SubjectsPage />} />
           <Route path="/horario" element={<SchedulePage />} />
           <Route path="/apuntes" element={<NotesPage />} />

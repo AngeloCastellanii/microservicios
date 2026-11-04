@@ -48,12 +48,12 @@ export function DashboardPage() {
         <div>
           <p className="eyebrow">{BRAND_NAME}</p>
           <h1 id="hero-title" className="hero-brand">
-            Estudia con el semestre bajo control
+            Tu estudio, en orden
           </h1>
           <p className="lede">{BRAND_TAGLINE}</p>
           {current && (
             <p className="lede period-hero-meta">
-              Viendo: {periodKindLabel(current.kind)} · {current.name}
+              Periodo: {periodKindLabel(current.kind)} · {current.name}
             </p>
           )}
         </div>
@@ -64,7 +64,7 @@ export function DashboardPage() {
           </div>
           <div className="stat-pill">
             <strong>{busy ? "—" : persistentCount}</strong>
-            <span>avisos persistentes</span>
+            <span>avisos activos</span>
           </div>
         </div>
       </section>
@@ -74,7 +74,7 @@ export function DashboardPage() {
       {!current && !periodLoading && (
         <EmptyState
           title="Configura un periodo"
-          description="Ve a Perfil para crear o activar un trimestre o semestre."
+          description="Ve a Perfil para crear o activar tu trimestre, semestre u otro periodo."
           actionLabel="Ir a perfil"
           actionTo="/perfil"
         />
@@ -85,6 +85,9 @@ export function DashboardPage() {
           <section className="panel" aria-labelledby="proximos-title">
             <div className="panel-head">
               <h2 id="proximos-title">Próximos</h2>
+              <Link className="btn sm" to="/cursos">
+                Nueva actividad
+              </Link>
             </div>
             {busy && (
               <>
@@ -95,9 +98,9 @@ export function DashboardPage() {
             {!busy && items.length === 0 && (
               <EmptyState
                 title="Sin entregas a la vista"
-                description="Crea tareas, proyectos o exámenes desde Materias."
-                actionLabel="Ir a materias"
-                actionTo="/materias"
+                description="Crea tareas, proyectos o exámenes desde Cursos."
+                actionLabel="Ir a cursos"
+                actionTo="/cursos"
               />
             )}
             {!busy && items.length > 0 && (
@@ -119,7 +122,9 @@ export function DashboardPage() {
                               ? "warn"
                               : item.status === "SCHEDULED"
                                 ? "info"
-                                : "ok"
+                                : item.status === "DONE"
+                                  ? "ok"
+                                  : "neutral"
                           }
                         >
                           {itemStatusLabel(item.status)}
@@ -130,8 +135,8 @@ export function DashboardPage() {
                 ))}
               </div>
             )}
-            <Link className="link-more" to="/materias">
-              Gestionar materias →
+            <Link className="link-more" to="/cursos">
+              Gestionar cursos →
             </Link>
           </section>
 
@@ -142,7 +147,7 @@ export function DashboardPage() {
             {!busy && notes.length === 0 && (
               <EmptyState
                 title="Todo tranquilo"
-                description="Cuando crees un ítem con fecha, aparecerá un recordatorio aquí."
+                description="Cuando crees una actividad con fecha, aparecerá un recordatorio aquí."
               />
             )}
             {!busy && notes.length > 0 && (

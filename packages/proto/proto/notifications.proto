@@ -8,6 +8,7 @@ service NotificationService {
   rpc MarkRead (MarkReadRequest) returns (Notification);
   rpc Dismiss (DismissRequest) returns (Notification);
   rpc GetNotification (GetNotificationRequest) returns (Notification);
+  rpc DeleteByRelatedItem (DeleteByRelatedItemRequest) returns (DeleteByRelatedItemResponse);
 }
 
 enum NotificationKind {
@@ -56,4 +57,12 @@ message DismissRequest {
 
 message GetNotificationRequest {
   string id = 1;
+}
+
+message DeleteByRelatedItemRequest {
+  string related_item_id = 1;
+}
+
+message DeleteByRelatedItemResponse {
+  int32 deleted = 1;
 }

@@ -32,9 +32,6 @@ importers:
       '@studyy/rpc-wrapper':
         specifier: workspace:*
         version: link:../../packages/rpc-wrapper
-      '@studyy/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -115,15 +112,6 @@ importers:
         specifier: ^5.8.3
         version: 5.9.3
 
-  packages/shared:
-    devDependencies:
-      '@types/node':
-        specifier: ^22.15.3
-        version: 22.20.5
-      typescript:
-        specifier: ^5.8.3
-        version: 5.9.3
-
   services/academic:
     dependencies:
       '@grpc/grpc-js':
@@ -138,9 +126,6 @@ importers:
       '@studyy/rpc-wrapper':
         specifier: workspace:*
         version: link:../../packages/rpc-wrapper
-      '@studyy/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -172,9 +157,6 @@ importers:
       '@studyy/rpc-wrapper':
         specifier: workspace:*
         version: link:../../packages/rpc-wrapper
-      '@studyy/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1

@@ -3,7 +3,12 @@ import { api, type Notification } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
-import { formatWhen, notifKindLabel, periodKindLabel } from "../labels";
+import {
+  formatWhen,
+  notifKindLabel,
+  periodKindLabel,
+  STUDY_TYPES,
+} from "../labels";
 import { usePeriod } from "../period-context";
 import {
   loadProfile,
@@ -12,19 +17,14 @@ import {
 } from "../profile-settings";
 
 export function ProfilePage() {
-  const {
-    periods,
-    current,
-    setCurrentId,
-    createPeriod,
-    removePeriod,
-  } = usePeriod();
+  const { periods, current, setCurrentId, createPeriod, removePeriod } =
+    usePeriod();
 
   const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
   const [savedMsg, setSavedMsg] = useState("");
   const [periodForm, setPeriodForm] = useState({
     name: "",
-    kind: "TRIMESTER" as "TRIMESTER" | "SEMESTER",
+    kind: "TRIMESTER" as "TRIMESTER" | "SEMESTER" | "CUSTOM",
     year: new Date().getFullYear(),
   });
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -64,7 +64,7 @@ export function ProfilePage() {
       <PageHeader
         eyebrow="Cuenta"
         title="Perfil"
-        subtitle="Datos, periodos académicos, preferencias y avisos."
+        subtitle="Datos de estudiante, periodos y avisos."
       />
       {error && <p className="error">{error}</p>}
 
@@ -73,7 +73,11 @@ export function ProfilePage() {
           <div className="panel-head">
             <h2 id="datos-title">Datos personales</h2>
           </div>
-          <form className="form-stack" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }} onSubmit={onSaveProfile}>
+          <form
+            className="form-stack"
+            style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}
+            onSubmit={onSaveProfile}
+          >
             <div className="field">
               <label htmlFor="display-name">Nombre</label>
               <input
@@ -98,6 +102,25 @@ export function ProfilePage() {
               />
             </div>
             <div className="field">
+              <label htmlFor="study-type">Tipo de estudio</label>
+              <select
+                id="study-type"
+                value={profile.studyType}
+                onChange={(e) =>
+                  setProfile({
+                    ...profile,
+                    studyType: e.target.value as ProfileSettings["studyType"],
+                  })
+                }
+              >
+                {STUDY_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label htmlFor="preferred-kind">Periodo preferido</label>
               <select
                 id="preferred-kind"
@@ -105,12 +128,13 @@ export function ProfilePage() {
                 onChange={(e) =>
                   setProfile({
                     ...profile,
-                    preferredKind: e.target.value as "TRIMESTER" | "SEMESTER",
+                    preferredKind: e.target.value as ProfileSettings["preferredKind"],
                   })
                 }
               >
                 <option value="TRIMESTER">Trimestre</option>
                 <option value="SEMESTER">Semestre</option>
+                <option value="CUSTOM">Personalizado</option>
               </select>
             </div>
             <div className="chip-row">
@@ -124,11 +148,10 @@ export function ProfilePage() {
 
         <section className="panel" aria-labelledby="periodos-title">
           <div className="panel-head">
-            <h2 id="periodos-title">Periodo académico</h2>
+            <h2 id="periodos-title">Periodo de estudio</h2>
           </div>
           <p className="meta" style={{ marginBottom: "0.85rem" }}>
-            Elige el periodo activo. Materias, horario y apuntes usan este
-            contexto.
+            Cursos, horario y apuntes usan el periodo activo.
           </p>
 
           <div className="field">
@@ -173,14 +196,17 @@ export function ProfilePage() {
           )}
 
           <form className="form-stack" onSubmit={onCreatePeriod}>
-            <div className="panel-head" style={{ borderBottom: 0, marginBottom: 0, paddingBottom: 0 }}>
+            <div
+              className="panel-head"
+              style={{ borderBottom: 0, marginBottom: 0, paddingBottom: 0 }}
+            >
               <h2 style={{ fontSize: "1rem" }}>Nuevo periodo</h2>
             </div>
             <div className="field">
               <label htmlFor="period-name">Nombre</label>
               <input
                 id="period-name"
-                placeholder="Nombre del periodo"
+                placeholder="Ej. 2026-1, Curso intensivo…"
                 value={periodForm.name}
                 onChange={(e) =>
                   setPeriodForm({ ...periodForm, name: e.target.value })
@@ -197,12 +223,13 @@ export function ProfilePage() {
                   onChange={(e) =>
                     setPeriodForm({
                       ...periodForm,
-                      kind: e.target.value as "TRIMESTER" | "SEMESTER",
+                      kind: e.target.value as typeof periodForm.kind,
                     })
                   }
                 >
                   <option value="TRIMESTER">Trimestre</option>
                   <option value="SEMESTER">Semestre</option>
+                  <option value="CUSTOM">Personalizado</option>
                 </select>
               </div>
               <div className="field">

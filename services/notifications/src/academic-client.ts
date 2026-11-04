@@ -1,6 +1,6 @@
 import { loadAcademicPackage } from "@studyy/proto";
 import { createGrpcClient, createLogger } from "@studyy/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@studyy/shared";
+import { DEFAULT_PORTS, envInt } from "@studyy/rpc-wrapper";
 import type * as grpc from "@grpc/grpc-js";
 
 const logger = createLogger("notifications→academic");

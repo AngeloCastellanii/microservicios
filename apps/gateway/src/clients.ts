@@ -3,7 +3,7 @@ import {
   loadNotificationsPackage,
 } from "@studyy/proto";
 import { createGrpcClient, createLogger } from "@studyy/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@studyy/shared";
+import { DEFAULT_PORTS, envInt } from "@studyy/rpc-wrapper";
 import type * as grpc from "@grpc/grpc-js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

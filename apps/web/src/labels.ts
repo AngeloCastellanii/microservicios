@@ -2,7 +2,7 @@ const ITEM_TYPES: Record<string, string> = {
   TASK: "Tarea",
   PROJECT: "Proyecto",
   EXAM: "Examen",
-  ITEM_TYPE_UNSPECIFIED: "Ítem",
+  ITEM_TYPE_UNSPECIFIED: "Actividad",
 };
 
 const ITEM_STATUS: Record<string, string> = {
@@ -22,8 +22,17 @@ const NOTIF_KIND: Record<string, string> = {
 const PERIOD_KIND: Record<string, string> = {
   TRIMESTER: "Trimestre",
   SEMESTER: "Semestre",
+  CUSTOM: "Personalizado",
   PERIOD_KIND_UNSPECIFIED: "Periodo",
 };
+
+export const STUDY_TYPES = [
+  { value: "university", label: "Universidad" },
+  { value: "school", label: "Colegio / escuela" },
+  { value: "course", label: "Curso libre" },
+  { value: "language", label: "Idiomas" },
+  { value: "other", label: "Otro" },
+] as const;
 
 export const DAYS = [
   { n: 1, label: "Lunes", short: "Lun" },
@@ -51,6 +60,10 @@ export function periodKindLabel(kind: string): string {
   return PERIOD_KIND[kind] ?? kind;
 }
 
+export function studyTypeLabel(value: string): string {
+  return STUDY_TYPES.find((t) => t.value === value)?.label ?? value;
+}
+
 export function formatWhen(iso: string): string {
   if (!iso) return "Sin fecha";
   const d = new Date(iso);
@@ -63,3 +76,18 @@ export function formatWhen(iso: string): string {
     minute: "2-digit",
   });
 }
+
+export function toLocalInput(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export const NEXT_STATUS: Record<string, string> = {
+  PENDING: "IN_PROGRESS",
+  IN_PROGRESS: "DONE",
+  SCHEDULED: "DONE",
+  DONE: "PENDING",
+};

@@ -1,14 +1,17 @@
+import { loadNotificationsPackage } from "@studyy/proto";
 import {
-  loadNotificationsPackage,
-} from "@studyy/proto";
-import { createGrpcClient, createLogger } from "@studyy/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@studyy/shared";
+  createGrpcClient,
+  createLogger,
+  DEFAULT_PORTS,
+  envInt,
+} from "@studyy/rpc-wrapper";
 import type * as grpc from "@grpc/grpc-js";
 
 const logger = createLogger("academic→notifications");
 
 type NotificationClient = grpc.Client & {
   CreateNotification: unknown;
+  DeleteByRelatedItem: unknown;
 };
 
 let client: ReturnType<typeof createGrpcClient<NotificationClient>> | null =
@@ -28,7 +31,10 @@ export function getNotificationsClient() {
     };
   };
 
-  const port = envInt("NOTIFICATIONS_GRPC_PORT", DEFAULT_PORTS.notificationsGrpc);
+  const port = envInt(
+    "NOTIFICATIONS_GRPC_PORT",
+    DEFAULT_PORTS.notificationsGrpc,
+  );
   const host = process.env.NOTIFICATIONS_GRPC_HOST ?? "127.0.0.1";
 
   client = createGrpcClient<NotificationClient>({
@@ -63,5 +69,23 @@ export async function createPersistentReminder(input: {
     });
   } catch (error) {
     logger.warn("No se pudo crear notificación (¿notifications caído?)", error);
+  }
+}
+
+export async function deleteRemindersForItem(
+  relatedItemId: string,
+): Promise<void> {
+  try {
+    const c = getNotificationsClient() as {
+      DeleteByRelatedItem: (req: {
+        relatedItemId: string;
+      }) => Promise<{ deleted: number }>;
+    };
+    await c.DeleteByRelatedItem({ relatedItemId });
+  } catch (error) {
+    logger.warn(
+      "No se pudieron limpiar notificaciones del ítem (¿notifications caído?)",
+      error,
+    );
   }
 }

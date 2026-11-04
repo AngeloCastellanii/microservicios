@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { loadNotificationsPackage } from "@studyy/proto";
 import { createGrpcServer, createLogger } from "@studyy/rpc-wrapper";
-import { DEFAULT_PORTS, envInt } from "@studyy/shared";
+import { DEFAULT_PORTS, envInt } from "@studyy/rpc-wrapper";
 import type * as grpc from "@grpc/grpc-js";
 import { prisma } from "./db.js";
 import { notificationHandlers } from "./handlers.js";

@@ -3,7 +3,8 @@
 export type PeriodKind =
   | "PERIOD_KIND_UNSPECIFIED"
   | "TRIMESTER"
-  | "SEMESTER";
+  | "SEMESTER"
+  | "CUSTOM";
 
 export type ItemType = "ITEM_TYPE_UNSPECIFIED" | "TASK" | "PROJECT" | "EXAM";
 export type ItemStatus =
@@ -256,4 +257,12 @@ export interface DismissRequest {
 
 export interface GetNotificationRequest {
   id: string;
+}
+
+export interface DeleteByRelatedItemRequest {
+  relatedItemId: string;
+}
+
+export interface DeleteByRelatedItemResponse {
+  deleted: number;
 }

@@ -1,6 +1,6 @@
 # Studyy — Microservicios académicos
 
-**Studyy**: plataforma de gestión académica (materias, tareas, proyectos, exámenes, horario, apuntes y avisos) con **2 microservicios gRPC**, PostgreSQL, gateway HTTP y frontend React.
+**Studyy**: plataforma para estudiantes (cursos, tareas, proyectos, exámenes, horario, apuntes y avisos) con **2 microservicios gRPC**, PostgreSQL, gateway HTTP y frontend React.
 
 ## Arquitectura
 
@@ -10,8 +10,8 @@ apps/web (React) → apps/gateway (Fastify REST)
                       └─ gRPC → services/notifications (PostgreSQL: notifications)
 
 Ida y vuelta:
-  academic → notifications  (crea recordatorio PERSISTENT al crear ítem con fecha)
-  notifications → academic  (enriquece listados con título/materia del ítem)
+  academic → notifications  (crea recordatorio PERSISTENT al crear actividad con fecha)
+  notifications → academic  (enriquece listados con título/curso del ítem)
 ```
 
 ## Stack
@@ -58,28 +58,28 @@ pnpm dev:web
 
 ### Si dice `EADDRINUSE` / `No address added`
 
-El puerto ya está ocupado por una instancia anterior. Cierra esa terminal o mata el proceso y vuelve a intentar. No hace falta volver a levantar un servicio que ya está corriendo.
+El puerto ya está ocupado por una instancia anterior. Cierra esa terminal o mata el proceso y vuelve a intentar.
 
 ## Estructura
 
 ```
 packages/proto          Contratos .proto + tipos
-packages/shared         Utilidades
-packages/rpc-wrapper    Server/client gRPC reutilizable
-services/academic       Dominio académico + BD
-services/notifications  Notificaciones NORMAL/PERSISTENT + BD
+packages/rpc-wrapper    Server/client gRPC + env/puertos
+services/academic       Dominio académico (src/domain/) + BD
+services/notifications  Avisos (src/domain/) + BD
 apps/gateway            REST → gRPC
-apps/web                UI React
-docs/mockups            Referencias visuales
+apps/web                UI React (estudiante)
+docs/                   Explicación de microservicios
 ```
 
 ## Periodos y perfil
 
-En **Perfil** configuras datos personales, periodo académico (trimestre/semestre) y avisos. Materias, horario y apuntes usan el periodo activo.
+En **Perfil** configuras datos, tipo de estudio, periodo (trimestre / semestre / personalizado) y avisos. Cursos, horario y apuntes usan el periodo activo.
 
 ## Demo de RPC bidireccional
 
-1. Crea un ítem con fecha en **Materias** → academic llama a notifications.
-2. Abre **Perfil → Avisos** → notifications llama a academic (`GetItem`) para mostrar título/materia.
+1. Crea una actividad con fecha en **Cursos** → academic llama a notifications.
+2. Abre **Perfil → Avisos** → notifications llama a academic (`GetItem`) para mostrar título/curso.
+3. Borra la actividad → se limpian avisos relacionados.
 
-Explicación de microservicios / gRPC / wrapper: [docs/MICROSERVICIOS.md](docs/MICROSERVICIOS.md).
+Explicación: [docs/MICROSERVICIOS.md](docs/MICROSERVICIOS.md).

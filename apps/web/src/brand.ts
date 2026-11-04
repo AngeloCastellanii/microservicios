@@ -1,4 +1,4 @@
 export const BRAND_NAME = "Studyy";
 
 export const BRAND_TAGLINE =
-  "Tu semestre, en orden: materias, entregas, horario y avisos.";
+  "Tu estudio, en orden: cursos, entregas, horario y avisos.";

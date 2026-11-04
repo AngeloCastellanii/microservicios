@@ -16,7 +16,6 @@
   "dependencies": {
     "@studyy/proto": "workspace:*",
     "@studyy/rpc-wrapper": "workspace:*",
-    "@studyy/shared": "workspace:*",
     "@grpc/grpc-js": "^1.13.4",
     "@prisma/client": "^6.8.2",
     "dotenv": "^16.5.0"

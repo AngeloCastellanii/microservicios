@@ -39,6 +39,7 @@ enum PeriodKind {
   PERIOD_KIND_UNSPECIFIED = 0;
   TRIMESTER = 1;
   SEMESTER = 2;
+  CUSTOM = 3;
 }
 
 enum ItemType {

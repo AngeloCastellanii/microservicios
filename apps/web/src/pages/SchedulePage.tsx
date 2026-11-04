@@ -1,22 +1,27 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type ScheduleSlot, type Subject } from "../api";
 import { EmptyState } from "../components/EmptyState";
+import { Modal } from "../components/Modal";
 import { PageHeader } from "../components/PageHeader";
 import { DAYS } from "../labels";
 import { usePeriod } from "../period-context";
+
+const emptyForm = {
+  id: "",
+  subjectId: "",
+  dayOfWeek: 1,
+  startTime: "10:00",
+  endTime: "12:00",
+  label: "",
+};
 
 export function SchedulePage() {
   const { current } = usePeriod();
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    subjectId: "",
-    dayOfWeek: 1,
-    startTime: "10:00",
-    endTime: "12:00",
-    label: "",
-  });
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
 
   async function reload() {
     if (!current) {
@@ -30,12 +35,6 @@ export function SchedulePage() {
     ]);
     setSlots(s);
     setSubjects(sub);
-    setForm((f) => ({
-      ...f,
-      subjectId: sub.some((x) => x.id === f.subjectId)
-        ? f.subjectId
-        : sub[0]?.id || "",
-    }));
   }
 
   useEffect(() => {
@@ -43,10 +42,44 @@ export function SchedulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
 
+  function openCreate(day = 1) {
+    setForm({
+      ...emptyForm,
+      dayOfWeek: day,
+      subjectId: subjects[0]?.id || "",
+    });
+    setOpen(true);
+  }
+
+  function openEdit(slot: ScheduleSlot) {
+    setForm({
+      id: slot.id,
+      subjectId: slot.subjectId,
+      dayOfWeek: slot.dayOfWeek,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      label: slot.label,
+    });
+    setOpen(true);
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    await api.upsertSlot(form);
-    await reload();
+    try {
+      setError("");
+      await api.upsertSlot({
+        ...(form.id ? { id: form.id } : {}),
+        subjectId: form.subjectId,
+        dayOfWeek: form.dayOfWeek,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        label: form.label,
+      });
+      setOpen(false);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar");
+    }
   }
 
   if (!current) {
@@ -55,7 +88,7 @@ export function SchedulePage() {
         <PageHeader eyebrow="Semana" title="Horario" />
         <EmptyState
           title="Selecciona un periodo"
-          description="Configura el trimestre o semestre desde Perfil."
+          description="Configura tu periodo desde Perfil."
           actionLabel="Ir a perfil"
           actionTo="/perfil"
         />
@@ -69,6 +102,11 @@ export function SchedulePage() {
         eyebrow="Semana"
         title="Horario"
         subtitle={`Bloques de ${current.name}`}
+        actions={
+          <button type="button" className="btn" onClick={() => openCreate()}>
+            Nuevo bloque
+          </button>
+        }
       />
       {error && <p className="error">{error}</p>}
 
@@ -100,7 +138,13 @@ export function SchedulePage() {
                       <button
                         className="btn ghost sm"
                         type="button"
-                        aria-label={`Quitar ${s.subjectName} del ${day.label}`}
+                        onClick={() => openEdit(s)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="btn ghost sm"
+                        type="button"
                         onClick={async () => {
                           await api.deleteSlot(s.id);
                           await reload();
@@ -117,17 +161,18 @@ export function SchedulePage() {
         </div>
       </div>
 
-      <form
-        className="panel form-stack"
-        style={{ marginTop: "1rem" }}
-        onSubmit={onSubmit}
+      <Modal
+        open={open}
+        title={form.id ? "Editar bloque" : "Nuevo bloque"}
+        onClose={() => setOpen(false)}
       >
-        <div className="panel-head">
-          <h2>Agregar bloque</h2>
-        </div>
-        <div className="form-row">
+        <form
+          className="form-stack"
+          style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}
+          onSubmit={onSubmit}
+        >
           <div className="field">
-            <label htmlFor="slot-subject">Materia</label>
+            <label htmlFor="slot-subject">Curso</label>
             <select
               id="slot-subject"
               value={form.subjectId}
@@ -142,56 +187,57 @@ export function SchedulePage() {
               ))}
             </select>
           </div>
-          <div className="field">
-            <label htmlFor="slot-day">Día</label>
-            <select
-              id="slot-day"
-              value={form.dayOfWeek}
-              onChange={(e) =>
-                setForm({ ...form, dayOfWeek: Number(e.target.value) })
-              }
-            >
-              {DAYS.map((d) => (
-                <option key={d.n} value={d.n}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="slot-start">Inicio</label>
-            <input
-              id="slot-start"
-              type="time"
-              value={form.startTime}
-              onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="slot-end">Fin</label>
-            <input
-              id="slot-end"
-              type="time"
-              value={form.endTime}
-              onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-              required
-            />
+          <div className="form-row">
+            <div className="field">
+              <label htmlFor="slot-day">Día</label>
+              <select
+                id="slot-day"
+                value={form.dayOfWeek}
+                onChange={(e) =>
+                  setForm({ ...form, dayOfWeek: Number(e.target.value) })
+                }
+              >
+                {DAYS.map((d) => (
+                  <option key={d.n} value={d.n}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="slot-start">Inicio</label>
+              <input
+                id="slot-start"
+                type="time"
+                value={form.startTime}
+                onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="slot-end">Fin</label>
+              <input
+                id="slot-end"
+                type="time"
+                value={form.endTime}
+                onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                required
+              />
+            </div>
           </div>
           <div className="field">
             <label htmlFor="slot-label">Etiqueta</label>
             <input
               id="slot-label"
-              placeholder="Etiqueta"
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
             />
           </div>
-        </div>
-        <button className="btn" type="submit">
-          Agregar al horario
-        </button>
-      </form>
+          <button className="btn" type="submit">
+            Guardar
+          </button>
+        </form>
+      </Modal>
     </>
   );
 }

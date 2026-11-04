@@ -20,7 +20,7 @@ type PeriodContextValue = {
   refresh: () => Promise<void>;
   createPeriod: (input: {
     name: string;
-    kind: "TRIMESTER" | "SEMESTER";
+    kind: "TRIMESTER" | "SEMESTER" | "CUSTOM";
     year: number;
   }) => Promise<void>;
   removePeriod: (id: string) => Promise<void>;
@@ -71,7 +71,7 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
 
   const createPeriod = async (input: {
     name: string;
-    kind: "TRIMESTER" | "SEMESTER";
+    kind: "TRIMESTER" | "SEMESTER" | "CUSTOM";
     year: number;
   }) => {
     const created = await api.createPeriod({ ...input, setActive: true });

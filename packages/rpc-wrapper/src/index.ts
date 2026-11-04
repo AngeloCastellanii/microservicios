@@ -21,3 +21,10 @@ export {
 } from "./errors.js";
 
 export { createLogger, type Logger, type LogLevel } from "./log.js";
+
+export {
+  DEFAULT_PORTS,
+  envInt,
+  requireEnv,
+  type ServiceName,
+} from "./env.js";
