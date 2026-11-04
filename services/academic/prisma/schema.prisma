@@ -14,6 +14,8 @@ model Period {
   kind      PeriodKind
   year      Int
   isActive  Boolean    @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   subjects  Subject[]
@@ -47,6 +49,7 @@ model Item {
   dueAt       DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  notes       Note[]
 
   @@index([subjectId])
   @@index([dueAt])
@@ -67,18 +70,33 @@ model ScheduleSlot {
 }
 
 model Note {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   periodId  String?
-  period    Period?  @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  period    Period?     @relation(fields: [periodId], references: [id], onDelete: Cascade)
   subjectId String?
-  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  subject   Subject?    @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  itemId    String?
+  item      Item?       @relation(fields: [itemId], references: [id], onDelete: SetNull)
   title     String
-  body      String   @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  body      String      @default("")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  images    NoteImage[]
 
   @@index([subjectId])
   @@index([periodId])
+  @@index([itemId])
+}
+
+model NoteImage {
+  id        String   @id @default(cuid())
+  noteId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  mime      String   @default("image/jpeg")
+  data      String
+  createdAt DateTime @default(now())
+
+  @@index([noteId])
 }
 
 enum PeriodKind {

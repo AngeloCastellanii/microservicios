@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type Item, type Notification } from "../api";
 import { BRAND_NAME, BRAND_TAGLINE } from "../brand";
@@ -11,28 +11,35 @@ import {
   notifKindLabel,
   periodKindLabel,
 } from "../labels";
+import { periodProgress } from "../period-progress";
 import { usePeriod } from "../period-context";
 
 export function DashboardPage() {
   const { current, loading: periodLoading } = usePeriod();
   const [items, setItems] = useState<Item[]>([]);
+  const [upcoming, setUpcoming] = useState<Item[]>([]);
   const [notes, setNotes] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [focusCourse, setFocusCourse] = useState("");
 
   useEffect(() => {
     if (!current) {
       setItems([]);
+      setUpcoming([]);
       setLoading(false);
       return;
     }
     setLoading(true);
+    setFocusCourse("");
     Promise.all([
+      api.listItems({ periodId: current.id }),
       api.listItems({ periodId: current.id, upcomingOnly: true, limit: 6 }),
       api.listNotifications(),
     ])
-      .then(([nextItems, nextNotes]) => {
-        setItems(nextItems);
+      .then(([allItems, nextItems, nextNotes]) => {
+        setItems(allItems);
+        setUpcoming(nextItems);
         setNotes(nextNotes.slice(0, 5));
       })
       .catch((err: Error) => setError(err.message))
@@ -41,6 +48,28 @@ export function DashboardPage() {
 
   const persistentCount = notes.filter((n) => n.kind === "PERSISTENT").length;
   const busy = loading || periodLoading;
+  const calendar = periodProgress(current?.startsAt, current?.endsAt);
+  const doneCount = items.filter((item) => item.status === "DONE").length;
+  const activeCount = items.filter(
+    (item) => item.status === "IN_PROGRESS" || item.status === "PENDING",
+  ).length;
+  const workPercent = items.length
+    ? Math.round((doneCount / items.length) * 100)
+    : 0;
+  const courses = useMemo(() => {
+    const map = new Map<string, { total: number; done: number }>();
+    for (const item of items) {
+      const name = item.subjectName || "Sin curso";
+      const row = map.get(name) ?? { total: 0, done: 0 };
+      row.total += 1;
+      if (item.status === "DONE") row.done += 1;
+      map.set(name, row);
+    }
+    return [...map.entries()];
+  }, [items]);
+  const visibleUpcoming = focusCourse
+    ? upcoming.filter((item) => item.subjectName === focusCourse)
+    : upcoming;
 
   return (
     <>
@@ -59,7 +88,7 @@ export function DashboardPage() {
         </div>
         <div className="hero-stats" aria-label="Resumen rápido">
           <div className="stat-pill">
-            <strong>{busy ? "—" : items.length}</strong>
+            <strong>{busy ? "—" : upcoming.length}</strong>
             <span>próximas entregas</span>
           </div>
           <div className="stat-pill">
@@ -81,6 +110,129 @@ export function DashboardPage() {
       )}
 
       {current && (
+        <>
+          <div className="dash-grid">
+            <section className="panel" aria-labelledby="calendario-title">
+              <div className="panel-head">
+                <h2 id="calendario-title">Avance del periodo</h2>
+              </div>
+              {!calendar && (
+                <EmptyState
+                  title="Faltan las fechas"
+                  description="Indica el inicio y el fin del trimestre o semestre en Perfil."
+                  actionLabel="Ir a perfil"
+                  actionTo="/perfil"
+                />
+              )}
+              {calendar && (
+                <>
+                  <p className="meta">
+                    Semana actual: {calendar.currentWeek}/{calendar.totalWeeks}
+                    {calendar.finished ? " · periodo terminado" : ""}
+                    {!calendar.started ? " · aún no inicia" : ""}
+                  </p>
+                  <div
+                    className="meter"
+                    role="progressbar"
+                    aria-valuenow={calendar.percent}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Progreso del periodo"
+                  >
+                    <span
+                      className="meter-fill"
+                      style={{ width: `${calendar.percent}%` }}
+                    />
+                  </div>
+                  <div className="dash-kpis">
+                    <div className="dash-kpi">
+                      <strong>{calendar.percent}%</strong>
+                      <span className="meta">recorrido</span>
+                    </div>
+                    <div className="dash-kpi">
+                      <strong>{calendar.remainingDays}</strong>
+                      <span className="meta">días restantes</span>
+                    </div>
+                    <div className="dash-kpi">
+                      <strong>
+                        {calendar.currentWeek}/{calendar.totalWeeks}
+                      </strong>
+                      <span className="meta">semana</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section className="panel" aria-labelledby="desempeno-title">
+              <div className="panel-head">
+                <h2 id="desempeno-title">Desempeño</h2>
+              </div>
+              <p className="meta">
+                {doneCount} de {items.length} actividades hechas
+              </p>
+              <div
+                className="meter"
+                role="progressbar"
+                aria-valuenow={workPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Actividades completadas"
+              >
+                <span
+                  className="meter-fill gold"
+                  style={{ width: `${workPercent}%` }}
+                />
+              </div>
+              <div className="dash-kpis">
+                <div className="dash-kpi">
+                  <strong>{doneCount}</strong>
+                  <span className="meta">hechas</span>
+                </div>
+                <div className="dash-kpi">
+                  <strong>{activeCount}</strong>
+                  <span className="meta">en curso</span>
+                </div>
+                <div className="dash-kpi">
+                  <strong>{workPercent}%</strong>
+                  <span className="meta">avance</span>
+                </div>
+              </div>
+              <div style={{ marginTop: "0.8rem" }}>
+                {courses.map(([name, row]) => {
+                  const pct = row.total
+                    ? Math.round((row.done / row.total) * 100)
+                    : 0;
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      className={`course-meter ${focusCourse === name ? "is-on" : ""}`}
+                      onClick={() =>
+                        setFocusCourse((currentName) =>
+                          currentName === name ? "" : name,
+                        )
+                      }
+                    >
+                      <span className="course-meter-top">
+                        <span>{name}</span>
+                        <span>
+                          {row.done}/{row.total}
+                        </span>
+                      </span>
+                      <span className="meter" aria-hidden>
+                        <span
+                          className="meter-fill"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
         <div className="grid-2">
           <section className="panel" aria-labelledby="proximos-title">
             <div className="panel-head">
@@ -95,7 +247,7 @@ export function DashboardPage() {
                 <div className="loading-line" />
               </>
             )}
-            {!busy && items.length === 0 && (
+            {!busy && visibleUpcoming.length === 0 && (
               <EmptyState
                 title="Sin entregas a la vista"
                 description="Crea tareas, proyectos o exámenes desde Cursos."
@@ -103,9 +255,9 @@ export function DashboardPage() {
                 actionTo="/cursos"
               />
             )}
-            {!busy && items.length > 0 && (
+            {!busy && visibleUpcoming.length > 0 && (
               <div className="list">
-                {items.map((item) => (
+                {visibleUpcoming.map((item) => (
                   <article className="row" key={item.id}>
                     <div>
                       <strong>{item.title}</strong>
@@ -175,6 +327,7 @@ export function DashboardPage() {
             </Link>
           </section>
         </div>
+        </>
       )}
     </>
   );

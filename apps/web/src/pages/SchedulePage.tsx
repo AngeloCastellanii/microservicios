@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api, type ScheduleSlot, type Subject } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
-import { PageHeader } from "../components/PageHeader";
+import { ViewHero } from "../components/ViewHero";
 import { DAYS } from "../labels";
 import { usePeriod } from "../period-context";
 
@@ -85,7 +85,15 @@ export function SchedulePage() {
   if (!current) {
     return (
       <>
-        <PageHeader eyebrow="Semana" title="Horario" />
+        <ViewHero
+          eyebrow="Semana"
+          title="Horario"
+          subtitle="Elige un periodo para armar la semana."
+          stats={[
+            { value: "—", label: "bloques" },
+            { value: "—", label: "días con clase" },
+          ]}
+        />
         <EmptyState
           title="Selecciona un periodo"
           description="Configura tu periodo desde Perfil."
@@ -98,11 +106,18 @@ export function SchedulePage() {
 
   return (
     <>
-      <PageHeader
+      <ViewHero
         eyebrow="Semana"
         title="Horario"
-        subtitle={`Bloques de ${current.name}`}
-        actions={
+        subtitle={`Bloques de ${current.name}.`}
+        stats={[
+          { value: slots.length, label: "bloques" },
+          {
+            value: new Set(slots.map((slot) => slot.dayOfWeek)).size,
+            label: "días con clase",
+          },
+        ]}
+        action={
           <button type="button" className="btn" onClick={() => openCreate()}>
             Nuevo bloque
           </button>

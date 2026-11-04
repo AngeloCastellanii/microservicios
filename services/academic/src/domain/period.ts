@@ -29,7 +29,17 @@ export function mapPeriod(row: DbPeriod): Period {
     isActive: row.isActive,
     createdAt: iso(row.createdAt),
     updatedAt: iso(row.updatedAt),
+    startsAt: iso(row.startsAt),
+    endsAt: iso(row.endsAt),
   };
+}
+
+function parseDate(value: string | undefined): Date | null | undefined {
+  if (value === undefined) return undefined;
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw invalidArgument("fecha inválida");
+  return date;
 }
 
 export async function createPeriod(input: {
@@ -37,6 +47,8 @@ export async function createPeriod(input: {
   kind?: string;
   year?: number;
   setActive?: boolean;
+  startsAt?: string;
+  endsAt?: string;
 }): Promise<Period> {
   const dbKind = toDbPeriodKind(input.kind);
   if (!input.name?.trim()) throw invalidArgument("name is required");
@@ -44,6 +56,12 @@ export async function createPeriod(input: {
     throw invalidArgument("kind must be TRIMESTER, SEMESTER or CUSTOM");
   }
   if (!input.year || input.year < 2000) throw invalidArgument("year is required");
+
+  const startsAt = parseDate(input.startsAt);
+  const endsAt = parseDate(input.endsAt);
+  if (startsAt && endsAt && endsAt < startsAt) {
+    throw invalidArgument("la fecha de fin debe ser posterior al inicio");
+  }
 
   if (input.setActive) {
     await prisma.period.updateMany({ data: { isActive: false } });
@@ -53,8 +71,36 @@ export async function createPeriod(input: {
     data: {
       name: input.name.trim(),
       kind: dbKind,
-      year: input.year,
-      isActive: Boolean(input.setActive),
+        year: input.year,
+        isActive: Boolean(input.setActive),
+        startsAt: startsAt ?? null,
+        endsAt: endsAt ?? null,
+      },
+    });
+  return mapPeriod(row);
+}
+
+export async function updatePeriod(input: {
+  id: string;
+  startsAt?: string;
+  endsAt?: string;
+}): Promise<Period> {
+  const existing = await prisma.period.findUnique({ where: { id: input.id } });
+  if (!existing) throw notFound("Period not found");
+
+  const startsAt =
+    input.startsAt !== undefined ? parseDate(input.startsAt) : existing.startsAt;
+  const endsAt =
+    input.endsAt !== undefined ? parseDate(input.endsAt) : existing.endsAt;
+  if (startsAt && endsAt && endsAt < startsAt) {
+    throw invalidArgument("la fecha de fin debe ser posterior al inicio");
+  }
+
+  const row = await prisma.period.update({
+    where: { id: input.id },
+    data: {
+      ...(input.startsAt !== undefined ? { startsAt } : {}),
+      ...(input.endsAt !== undefined ? { endsAt } : {}),
     },
   });
   return mapPeriod(row);

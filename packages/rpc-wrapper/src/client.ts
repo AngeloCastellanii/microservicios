@@ -69,6 +69,10 @@ export function createGrpcClient<TClient extends grpc.Client>(
   const raw = new options.ClientConstructor(
     options.address,
     grpc.credentials.createInsecure(),
+    {
+      "grpc.max_receive_message_length": 8 * 1024 * 1024,
+      "grpc.max_send_message_length": 8 * 1024 * 1024,
+    },
   ) as TClient;
 
   const proxy = new Proxy(raw as object, {

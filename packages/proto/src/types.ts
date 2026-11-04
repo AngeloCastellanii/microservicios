@@ -31,6 +31,8 @@ export interface Period {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  startsAt: string;
+  endsAt: string;
 }
 
 export interface CreatePeriodRequest {
@@ -38,6 +40,14 @@ export interface CreatePeriodRequest {
   kind: PeriodKind;
   year: number;
   setActive?: boolean;
+  startsAt?: string;
+  endsAt?: string;
+}
+
+export interface UpdatePeriodRequest {
+  id: string;
+  startsAt?: string;
+  endsAt?: string;
 }
 
 export interface ListPeriodsRequest {}
@@ -178,6 +188,13 @@ export interface DeleteScheduleSlotRequest {
   id: string;
 }
 
+export interface NoteImage {
+  id: string;
+  noteId: string;
+  mime: string;
+  data: string;
+}
+
 export interface Note {
   id: string;
   periodId: string;
@@ -187,6 +204,9 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
   subjectName: string;
+  itemId: string;
+  itemTitle: string;
+  images: NoteImage[];
 }
 
 export interface CreateNoteRequest {
@@ -194,6 +214,7 @@ export interface CreateNoteRequest {
   subjectId?: string;
   title: string;
   body?: string;
+  itemId?: string;
 }
 
 export interface ListNotesRequest {
@@ -211,6 +232,21 @@ export interface UpdateNoteRequest {
   title?: string;
   body?: string;
   subjectId?: string;
+  itemId?: string;
+}
+
+export interface AddNoteImageRequest {
+  noteId: string;
+  mime: string;
+  data: string;
+}
+
+export interface GetNoteImageRequest {
+  id: string;
+}
+
+export interface DeleteNoteImageRequest {
+  id: string;
 }
 
 export interface DeleteNoteRequest {

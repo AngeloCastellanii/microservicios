@@ -16,7 +16,7 @@ dotenv.config({ path: path.join(root, ".env") });
 const logger = createLogger("gateway");
 
 async function main() {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, bodyLimit: 8 * 1024 * 1024 });
   await app.register(cors, { origin: true });
   await registerRoutes(app);
 

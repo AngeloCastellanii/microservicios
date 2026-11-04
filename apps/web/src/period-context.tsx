@@ -22,7 +22,10 @@ type PeriodContextValue = {
     name: string;
     kind: "TRIMESTER" | "SEMESTER" | "CUSTOM";
     year: number;
+    startsAt?: string;
+    endsAt?: string;
   }) => Promise<void>;
+  savePeriodDates: (id: string, startsAt: string, endsAt: string) => Promise<void>;
   removePeriod: (id: string) => Promise<void>;
 };
 
@@ -73,12 +76,19 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
     name: string;
     kind: "TRIMESTER" | "SEMESTER" | "CUSTOM";
     year: number;
+    startsAt?: string;
+    endsAt?: string;
   }) => {
     const created = await api.createPeriod({ ...input, setActive: true });
     await api.activatePeriod(created.id).catch(() => undefined);
     await refresh();
     setCurrentIdState(created.id);
     localStorage.setItem(STORAGE_KEY, created.id);
+  };
+
+  const savePeriodDates = async (id: string, startsAt: string, endsAt: string) => {
+    await api.updatePeriod(id, { startsAt, endsAt });
+    await refresh();
   };
 
   const removePeriod = async (id: string) => {
@@ -99,6 +109,7 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
     setCurrentId,
     refresh,
     createPeriod,
+    savePeriodDates,
     removePeriod,
   };
 

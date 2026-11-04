@@ -42,6 +42,13 @@ export async function registerRoutes(app: FastifyInstance) {
   app.post<{ Body: Record<string, unknown> }>("/api/periods", async (req, reply) =>
     callOrReply(reply, () => academic.CreatePeriod(req.body)),
   );
+  app.patch<{ Params: { id: string }; Body: Record<string, unknown> }>(
+    "/api/periods/:id",
+    async (req, reply) =>
+      callOrReply(reply, () =>
+        academic.UpdatePeriod({ id: req.params.id, ...req.body }),
+      ),
+  );
   app.post<{ Params: { id: string } }>(
     "/api/periods/:id/activate",
     async (req, reply) =>
@@ -142,6 +149,25 @@ export async function registerRoutes(app: FastifyInstance) {
   );
   app.delete<{ Params: { id: string } }>("/api/notes/:id", async (req, reply) =>
     callOrReply(reply, () => academic.DeleteNote({ id: req.params.id })),
+  );
+  app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+    "/api/notes/:id/images",
+    async (req, reply) =>
+      callOrReply(reply, () =>
+        academic.AddNoteImage({ noteId: req.params.id, ...req.body }),
+      ),
+  );
+  app.get<{ Params: { id: string } }>(
+    "/api/note-images/:id",
+    async (req, reply) =>
+      callOrReply(reply, () => academic.GetNoteImage({ id: req.params.id })),
+  );
+  app.delete<{ Params: { id: string } }>(
+    "/api/note-images/:id",
+    async (req, reply) =>
+      callOrReply(reply, () =>
+        academic.DeleteNoteImage({ id: req.params.id }),
+      ),
   );
 
   // Notifications

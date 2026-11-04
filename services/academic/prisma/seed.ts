@@ -19,12 +19,23 @@ async function main() {
   await prisma.period.deleteMany();
 
   const year = new Date().getFullYear();
+  const today = new Date();
+  const weekday = (today.getDay() + 6) % 7;
+  const startsAt = new Date(today);
+  startsAt.setDate(today.getDate() - weekday - 9 * 7);
+  startsAt.setHours(0, 0, 0, 0);
+  const endsAt = new Date(startsAt);
+  endsAt.setDate(startsAt.getDate() + 13 * 7 - 1);
+  endsAt.setHours(23, 59, 0, 0);
+
   const period = await prisma.period.create({
     data: {
       name: `Trimestre ${year}`,
       kind: "TRIMESTER",
       year,
       isActive: true,
+      startsAt,
+      endsAt,
     },
   });
 
@@ -193,11 +204,19 @@ async function main() {
     ],
   });
 
+  const grpcItem = await prisma.item.findFirst({
+    where: { title: "Demo gRPC bidireccional" },
+  });
+  const tesisItem = await prisma.item.findFirst({
+    where: { title: "Problema de investigación" },
+  });
+
   await prisma.note.createMany({
     data: [
       {
         periodId: period.id,
         subjectId: dist.id,
+        itemId: grpcItem?.id,
         title: "Ida y vuelta gRPC",
         body: "Academic crea el recordatorio. Notifications pide GetItem para enriquecer el aviso.",
       },
@@ -216,6 +235,7 @@ async function main() {
       {
         periodId: period.id,
         subjectId: tesis.id,
+        itemId: tesisItem?.id,
         title: "Pregunta tentativa",
         body: "¿Cómo afecta la latencia entre microservicios a la experiencia del estudiante?",
       },

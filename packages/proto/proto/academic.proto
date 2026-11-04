@@ -5,6 +5,7 @@ package studyy.academic;
 service AcademicService {
   // Periodos (trimestre / semestre)
   rpc CreatePeriod (CreatePeriodRequest) returns (Period);
+  rpc UpdatePeriod (UpdatePeriodRequest) returns (Period);
   rpc ListPeriods (ListPeriodsRequest) returns (ListPeriodsResponse);
   rpc SetActivePeriod (SetActivePeriodRequest) returns (Period);
   rpc DeletePeriod (DeletePeriodRequest) returns (DeleteResponse);
@@ -33,6 +34,9 @@ service AcademicService {
   rpc ListNotes (ListNotesRequest) returns (ListNotesResponse);
   rpc UpdateNote (UpdateNoteRequest) returns (Note);
   rpc DeleteNote (DeleteNoteRequest) returns (DeleteResponse);
+  rpc AddNoteImage (AddNoteImageRequest) returns (NoteImage);
+  rpc GetNoteImage (GetNoteImageRequest) returns (NoteImage);
+  rpc DeleteNoteImage (DeleteNoteImageRequest) returns (DeleteResponse);
 }
 
 enum PeriodKind {
@@ -69,6 +73,8 @@ message Period {
   bool is_active = 5;
   string created_at = 6;
   string updated_at = 7;
+  string starts_at = 8;
+  string ends_at = 9;
 }
 
 message CreatePeriodRequest {
@@ -76,6 +82,14 @@ message CreatePeriodRequest {
   PeriodKind kind = 2;
   int32 year = 3;
   bool set_active = 4;
+  string starts_at = 5;
+  string ends_at = 6;
+}
+
+message UpdatePeriodRequest {
+  string id = 1;
+  string starts_at = 2;
+  string ends_at = 3;
 }
 
 message ListPeriodsRequest {}
@@ -216,6 +230,13 @@ message DeleteScheduleSlotRequest {
   string id = 1;
 }
 
+message NoteImage {
+  string id = 1;
+  string note_id = 2;
+  string mime = 3;
+  string data = 4;
+}
+
 message Note {
   string id = 1;
   string period_id = 2;
@@ -225,6 +246,9 @@ message Note {
   string created_at = 6;
   string updated_at = 7;
   string subject_name = 8;
+  string item_id = 9;
+  string item_title = 10;
+  repeated NoteImage images = 11;
 }
 
 message CreateNoteRequest {
@@ -232,6 +256,7 @@ message CreateNoteRequest {
   string subject_id = 2;
   string title = 3;
   string body = 4;
+  string item_id = 5;
 }
 
 message ListNotesRequest {
@@ -249,6 +274,21 @@ message UpdateNoteRequest {
   string title = 2;
   string body = 3;
   string subject_id = 4;
+  string item_id = 5;
+}
+
+message AddNoteImageRequest {
+  string note_id = 1;
+  string mime = 2;
+  string data = 3;
+}
+
+message GetNoteImageRequest {
+  string id = 1;
+}
+
+message DeleteNoteImageRequest {
+  string id = 1;
 }
 
 message DeleteNoteRequest {

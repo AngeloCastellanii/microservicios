@@ -10,6 +10,7 @@ import {
   STUDY_TYPES,
 } from "../labels";
 import { usePeriod } from "../period-context";
+import { toDateInput } from "../period-progress";
 import {
   loadProfile,
   saveProfile,
@@ -17,8 +18,14 @@ import {
 } from "../profile-settings";
 
 export function ProfilePage() {
-  const { periods, current, setCurrentId, createPeriod, removePeriod } =
-    usePeriod();
+  const {
+    periods,
+    current,
+    setCurrentId,
+    createPeriod,
+    savePeriodDates,
+    removePeriod,
+  } = usePeriod();
 
   const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
   const [savedMsg, setSavedMsg] = useState("");
@@ -26,7 +33,10 @@ export function ProfilePage() {
     name: "",
     kind: "TRIMESTER" as "TRIMESTER" | "SEMESTER" | "CUSTOM",
     year: new Date().getFullYear(),
+    startsAt: "",
+    endsAt: "",
   });
+  const [dates, setDates] = useState({ startsAt: "", endsAt: "" });
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [error, setError] = useState("");
 
@@ -42,6 +52,13 @@ export function ProfilePage() {
     setPeriodForm((f) => ({ ...f, kind: profile.preferredKind }));
   }, [profile.preferredKind]);
 
+  useEffect(() => {
+    setDates({
+      startsAt: toDateInput(current?.startsAt),
+      endsAt: toDateInput(current?.endsAt),
+    });
+  }, [current?.id, current?.startsAt, current?.endsAt]);
+
   function onSaveProfile(e: FormEvent) {
     e.preventDefault();
     saveProfile(profile);
@@ -51,12 +68,39 @@ export function ProfilePage() {
 
   async function onCreatePeriod(e: FormEvent) {
     e.preventDefault();
-    await createPeriod(periodForm);
+    await createPeriod({
+      ...periodForm,
+      startsAt: periodForm.startsAt
+        ? new Date(periodForm.startsAt).toISOString()
+        : "",
+      endsAt: periodForm.endsAt
+        ? new Date(periodForm.endsAt).toISOString()
+        : "",
+    });
     setPeriodForm({
       name: "",
       kind: profile.preferredKind,
       year: new Date().getFullYear(),
+      startsAt: "",
+      endsAt: "",
     });
+  }
+
+  async function onSaveDates(e: FormEvent) {
+    e.preventDefault();
+    if (!current) return;
+    try {
+      setError("");
+      await savePeriodDates(
+        current.id,
+        dates.startsAt ? new Date(dates.startsAt).toISOString() : "",
+        dates.endsAt ? new Date(dates.endsAt).toISOString() : "",
+      );
+      setSavedMsg("Fechas guardadas");
+      window.setTimeout(() => setSavedMsg(""), 1800);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudieron guardar las fechas");
+    }
   }
 
   return (
@@ -171,28 +215,61 @@ export function ProfilePage() {
           </div>
 
           {current && (
-            <div className="chip-row" style={{ marginTop: "0.75rem" }}>
-              <StatusBadge tone="ok">Activo</StatusBadge>
-              <span className="meta">
-                {periodKindLabel(current.kind)} · {current.name}
-              </span>
-              <button
-                type="button"
-                className="btn ghost sm"
-                onClick={async () => {
-                  if (
-                    !confirm(
-                      `¿Eliminar «${current.name}» y todo su contenido?`,
-                    )
-                  ) {
-                    return;
-                  }
-                  await removePeriod(current.id);
-                }}
-              >
-                Eliminar periodo
-              </button>
-            </div>
+            <>
+              <div className="chip-row" style={{ marginTop: "0.75rem" }}>
+                <StatusBadge tone="ok">Activo</StatusBadge>
+                <span className="meta">
+                  {periodKindLabel(current.kind)} · {current.name}
+                </span>
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  onClick={async () => {
+                    if (
+                      !confirm(
+                        `¿Eliminar «${current.name}» y todo su contenido?`,
+                      )
+                    ) {
+                      return;
+                    }
+                    await removePeriod(current.id);
+                  }}
+                >
+                  Eliminar periodo
+                </button>
+              </div>
+              <form className="form-stack" onSubmit={onSaveDates}>
+                <div className="form-row">
+                  <div className="field">
+                    <label htmlFor="active-start">Inicio</label>
+                    <input
+                      id="active-start"
+                      type="date"
+                      value={dates.startsAt}
+                      onChange={(e) =>
+                        setDates({ ...dates, startsAt: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="active-end">Fin</label>
+                    <input
+                      id="active-end"
+                      type="date"
+                      value={dates.endsAt}
+                      onChange={(e) =>
+                        setDates({ ...dates, endsAt: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+                <button className="btn sm" type="submit">
+                  Guardar fechas
+                </button>
+              </form>
+            </>
           )}
 
           <form className="form-stack" onSubmit={onCreatePeriod}>
@@ -247,6 +324,30 @@ export function ProfilePage() {
                     })
                   }
                   required
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="field">
+                <label htmlFor="period-start">Inicio</label>
+                <input
+                  id="period-start"
+                  type="date"
+                  value={periodForm.startsAt}
+                  onChange={(e) =>
+                    setPeriodForm({ ...periodForm, startsAt: e.target.value })
+                  }
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="period-end">Fin</label>
+                <input
+                  id="period-end"
+                  type="date"
+                  value={periodForm.endsAt}
+                  onChange={(e) =>
+                    setPeriodForm({ ...periodForm, endsAt: e.target.value })
+                  }
                 />
               </div>
             </div>

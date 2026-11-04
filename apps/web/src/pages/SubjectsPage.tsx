@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api, type Item, type Subject } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
-import { PageHeader } from "../components/PageHeader";
+import { ViewHero } from "../components/ViewHero";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   formatWhen,
@@ -185,7 +185,15 @@ export function SubjectsPage() {
   if (!current) {
     return (
       <>
-        <PageHeader eyebrow="Estudio" title="Cursos" />
+        <ViewHero
+          eyebrow="Estudio"
+          title="Cursos"
+          subtitle="Elige un periodo para ver tus cursos."
+          stats={[
+            { value: "—", label: "cursos" },
+            { value: "—", label: "actividades" },
+          ]}
+        />
         <EmptyState
           title="Selecciona un periodo"
           description="Configura tu periodo desde Perfil."
@@ -198,11 +206,15 @@ export function SubjectsPage() {
 
   return (
     <>
-      <PageHeader
+      <ViewHero
         eyebrow="Estudio"
         title="Cursos"
-        subtitle={`Periodo: ${current.name}`}
-        actions={
+        subtitle={`${current.name}. Elige uno para ver sus actividades.`}
+        stats={[
+          { value: subjects.length, label: "cursos" },
+          { value: items.length, label: "en este curso" },
+        ]}
+        action={
           <button type="button" className="btn" onClick={openCreateCourse}>
             Nuevo curso
           </button>

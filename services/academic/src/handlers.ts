@@ -4,12 +4,15 @@ import type {
   CreatePeriodRequest,
   CreateSubjectRequest,
   DeleteItemRequest,
+  AddNoteImageRequest,
+  DeleteNoteImageRequest,
   DeleteNoteRequest,
   DeletePeriodRequest,
   DeleteResponse,
   DeleteScheduleSlotRequest,
   DeleteSubjectRequest,
   GetItemRequest,
+  GetNoteImageRequest,
   GetSubjectRequest,
   Item,
   ListItemsRequest,
@@ -23,11 +26,13 @@ import type {
   ListSubjectsRequest,
   ListSubjectsResponse,
   Note,
+  NoteImage,
   Period,
   ScheduleSlot,
   SetActivePeriodRequest,
   Subject,
   UpdateItemRequest,
+  UpdatePeriodRequest,
   UpdateNoteRequest,
   UpdateSubjectRequest,
   UpsertScheduleSlotRequest,
@@ -40,6 +45,10 @@ type Call<T> = grpc.ServerUnaryCall<T, unknown>;
 export const academicHandlers = {
   async CreatePeriod(call: Call<CreatePeriodRequest>): Promise<Period> {
     return domain.createPeriod(call.request);
+  },
+
+  async UpdatePeriod(call: Call<UpdatePeriodRequest>): Promise<Period> {
+    return domain.updatePeriod(call.request);
   },
 
   async ListPeriods(
@@ -136,6 +145,21 @@ export const academicHandlers = {
 
   async DeleteNote(call: Call<DeleteNoteRequest>): Promise<DeleteResponse> {
     await domain.deleteNote(call.request.id);
+    return { ok: true };
+  },
+
+  async AddNoteImage(call: Call<AddNoteImageRequest>): Promise<NoteImage> {
+    return domain.addNoteImage(call.request);
+  },
+
+  async GetNoteImage(call: Call<GetNoteImageRequest>): Promise<NoteImage> {
+    return domain.getNoteImage(call.request.id);
+  },
+
+  async DeleteNoteImage(
+    call: Call<DeleteNoteImageRequest>,
+  ): Promise<DeleteResponse> {
+    await domain.deleteNoteImage(call.request.id);
     return { ok: true };
   },
 };

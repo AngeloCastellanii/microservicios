@@ -18,6 +18,8 @@ export type Period = {
   kind: string;
   year: number;
   isActive: boolean;
+  startsAt?: string;
+  endsAt?: string;
 };
 
 export type Subject = {
@@ -49,6 +51,13 @@ export type ScheduleSlot = {
   subjectName: string;
 };
 
+export type NoteImage = {
+  id: string;
+  noteId: string;
+  mime: string;
+  data: string;
+};
+
 export type Note = {
   id: string;
   periodId: string;
@@ -56,6 +65,9 @@ export type Note = {
   title: string;
   body: string;
   subjectName: string;
+  itemId: string;
+  itemTitle: string;
+  images: NoteImage[];
 };
 
 export type Notification = {
@@ -87,6 +99,11 @@ export const api = {
   createPeriod: (body: Record<string, unknown>) =>
     request<Period>("/api/periods", {
       method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updatePeriod: (id: string, body: Record<string, unknown>) =>
+    request<Period>(`/api/periods/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(body),
     }),
   activatePeriod: (id: string) =>
@@ -147,6 +164,14 @@ export const api = {
       body: JSON.stringify(body),
     }),
   deleteNote: (id: string) => request(`/api/notes/${id}`, { method: "DELETE" }),
+  addNoteImage: (noteId: string, body: { mime: string; data: string }) =>
+    request<NoteImage>(`/api/notes/${noteId}/images`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getNoteImage: (id: string) => request<NoteImage>(`/api/note-images/${id}`),
+  deleteNoteImage: (id: string) =>
+    request(`/api/note-images/${id}`, { method: "DELETE" }),
 
   listNotifications: () =>
     request<{ notifications: Notification[] }>("/api/notifications").then(

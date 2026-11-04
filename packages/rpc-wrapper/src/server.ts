@@ -58,7 +58,10 @@ export async function createGrpcServer(
   const logger = options.logger ?? createLogger(options.serviceName);
   const host = options.host ?? "0.0.0.0";
   const address = `${host}:${options.port}`;
-  const server = new grpc.Server();
+  const server = new grpc.Server({
+    "grpc.max_receive_message_length": 8 * 1024 * 1024,
+    "grpc.max_send_message_length": 8 * 1024 * 1024,
+  });
 
   const wrapped: grpc.UntypedServiceImplementation = {};
   for (const [methodName, handler] of Object.entries(options.implementation)) {
