@@ -4,13 +4,9 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from "react";
-import {
-  NavLink,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { BRAND_NAME } from "./brand";
 import { DashboardPage } from "./pages/DashboardPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
@@ -21,11 +17,45 @@ import { usePeriod } from "./period-context";
 import { periodKindLabel } from "./labels";
 import { loadProfile, type ProfileSettings } from "./profile-settings";
 
+type ViewId = "inicio" | "cursos" | "horario" | "apuntes" | "perfil";
+
+function pathToView(pathname: string): ViewId {
+  if (pathname.startsWith("/cursos") || pathname.startsWith("/materias")) {
+    return "cursos";
+  }
+  if (pathname.startsWith("/horario")) return "horario";
+  if (pathname.startsWith("/apuntes")) return "apuntes";
+  if (pathname.startsWith("/perfil") || pathname.startsWith("/notificaciones")) {
+    return "perfil";
+  }
+  return "inicio";
+}
+
+function ViewPane({
+  active,
+  children,
+}: {
+  active: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`view-pane ${active ? "is-active" : ""}`}
+      aria-hidden={!active}
+      inert={!active ? true : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function App() {
   const location = useLocation();
+  const activeView = pathToView(location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
   const { current } = usePeriod();
   const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
+  const [mounted, setMounted] = useState(() => new Set<ViewId>([activeView]));
   const navRef = useRef<HTMLElement>(null);
   const [pill, setPill] = useState({
     left: 0,
@@ -38,6 +68,15 @@ export function App() {
     window.addEventListener("studyy-profile-updated", sync);
     return () => window.removeEventListener("studyy-profile-updated", sync);
   }, []);
+
+  useEffect(() => {
+    setMounted((prev) => {
+      if (prev.has(activeView)) return prev;
+      const next = new Set(prev);
+      next.add(activeView);
+      return next;
+    });
+  }, [activeView]);
 
   useLayoutEffect(() => {
     const updatePill = () => {
@@ -81,7 +120,6 @@ export function App() {
             to="/"
             className="brand"
             end
-            viewTransition
             aria-label={`${BRAND_NAME} inicio`}
             onClick={closeMenu}
           >
@@ -106,19 +144,19 @@ export function App() {
             aria-label="Principal"
           >
             <span className="nav-pill" style={pillStyle} aria-hidden />
-            <NavLink to="/" end viewTransition onClick={closeMenu}>
+            <NavLink to="/" end onClick={closeMenu}>
               Inicio
             </NavLink>
-            <NavLink to="/cursos" viewTransition onClick={closeMenu}>
+            <NavLink to="/cursos" onClick={closeMenu}>
               Cursos
             </NavLink>
-            <NavLink to="/horario" viewTransition onClick={closeMenu}>
+            <NavLink to="/horario" onClick={closeMenu}>
               Horario
             </NavLink>
-            <NavLink to="/apuntes" viewTransition onClick={closeMenu}>
+            <NavLink to="/apuntes" onClick={closeMenu}>
               Apuntes
             </NavLink>
-            <NavLink to="/perfil" viewTransition onClick={closeMenu}>
+            <NavLink to="/perfil" onClick={closeMenu}>
               Perfil
             </NavLink>
           </nav>
@@ -130,11 +168,7 @@ export function App() {
               <span className="period-chip">{profile.displayName}</span>
             )}
             {current && (
-              <NavLink
-                to="/perfil"
-                className="period-chip period-chip-link"
-                viewTransition
-              >
+              <NavLink to="/perfil" className="period-chip period-chip-link">
                 {periodKindLabel(current.kind)} · {current.name}
               </NavLink>
             )}
@@ -143,16 +177,32 @@ export function App() {
       </header>
 
       <main id="contenido" className="view-root">
-        <div key={location.pathname} className="page-enter">
-          <Routes location={location}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/cursos" element={<SubjectsPage />} />
-            <Route path="/materias" element={<SubjectsPage />} />
-            <Route path="/horario" element={<SchedulePage />} />
-            <Route path="/apuntes" element={<NotesPage />} />
-            <Route path="/perfil" element={<ProfilePage />} />
-            <Route path="/notificaciones" element={<ProfilePage />} />
-          </Routes>
+        <div className="view-stack">
+          {mounted.has("inicio") && (
+            <ViewPane active={activeView === "inicio"}>
+              <DashboardPage />
+            </ViewPane>
+          )}
+          {mounted.has("cursos") && (
+            <ViewPane active={activeView === "cursos"}>
+              <SubjectsPage />
+            </ViewPane>
+          )}
+          {mounted.has("horario") && (
+            <ViewPane active={activeView === "horario"}>
+              <SchedulePage />
+            </ViewPane>
+          )}
+          {mounted.has("apuntes") && (
+            <ViewPane active={activeView === "apuntes"}>
+              <NotesPage />
+            </ViewPane>
+          )}
+          {mounted.has("perfil") && (
+            <ViewPane active={activeView === "perfil"}>
+              <ProfilePage />
+            </ViewPane>
+          )}
         </div>
       </main>
     </div>
