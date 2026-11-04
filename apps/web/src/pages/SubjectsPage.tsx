@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, type Item, type Subject } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
@@ -17,9 +18,12 @@ const COLORS = ["#0D9488", "#0369A1", "#7C3AED", "#EA580C", "#BE123C", "#15803D"
 
 export function SubjectsPage() {
   const { current } = usePeriod();
+  const [searchParams] = useSearchParams();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [items, setItems] = useState<Item[]>([]);
+  const [highlightItemId, setHighlightItemId] = useState("");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [courseOpen, setCourseOpen] = useState(false);
   const [itemOpen, setItemOpen] = useState(false);
@@ -69,6 +73,28 @@ export function SubjectsPage() {
       .then(setItems)
       .catch((err: Error) => setError(err.message));
   }, [selectedId]);
+
+  useEffect(() => {
+    const itemId = searchParams.get("itemId") || "";
+    const subjectId = searchParams.get("subjectId") || "";
+    if (!itemId && !subjectId) return;
+    if (subjectId) setSelectedId(subjectId);
+    if (!itemId || !current) return;
+    api
+      .listItems({ periodId: current.id })
+      .then((all) => {
+        const found = all.find((row) => row.id === itemId);
+        if (!found) return;
+        setSelectedId(found.subjectId);
+        setHighlightItemId(found.id);
+        window.setTimeout(() => {
+          document
+            .getElementById(`item-${found.id}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 120);
+      })
+      .catch(() => undefined);
+  }, [searchParams, current]);
 
   function openCreateCourse() {
     setEditingCourse(null);
@@ -181,6 +207,27 @@ export function SubjectsPage() {
   }
 
   const selected = subjects.find((s) => s.id === selectedId);
+  const q = query.trim().toLowerCase();
+  const visibleSubjects = useMemo(
+    () =>
+      subjects.filter(
+        (s) =>
+          !q ||
+          s.name.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q),
+      ),
+    [subjects, q],
+  );
+  const visibleItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          !q ||
+          item.title.toLowerCase().includes(q) ||
+          item.description.toLowerCase().includes(q),
+      ),
+    [items, q],
+  );
 
   if (!current) {
     return (
@@ -222,11 +269,23 @@ export function SubjectsPage() {
       />
       {error && <p className="error">{error}</p>}
 
+      <div className="search-field">
+        <label className="sr-only" htmlFor="course-search">
+          Buscar cursos o actividades
+        </label>
+        <input
+          id="course-search"
+          placeholder="Buscar curso o actividad…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
       <div className="course-board" aria-label="Lista de cursos">
-        {subjects.length === 0 && (
+        {visibleSubjects.length === 0 && (
           <p className="empty">Todavía no agregaste ninguno.</p>
         )}
-        {subjects.map((s) => (
+        {visibleSubjects.map((s) => (
           <button
             key={s.id}
             type="button"
@@ -270,6 +329,12 @@ export function SubjectsPage() {
                   </p>
                 </div>
                 <div className="row-actions">
+                  <Link
+                    className="btn ghost sm"
+                    to={`/apuntes?subjectId=${selected.id}&new=1`}
+                  >
+                    Apunte
+                  </Link>
                   <button
                     type="button"
                     className="btn ghost sm"
@@ -291,11 +356,15 @@ export function SubjectsPage() {
               </div>
 
               <div className="list">
-                {items.length === 0 && (
+                {visibleItems.length === 0 && (
                   <p className="empty">Sin actividades en este curso.</p>
                 )}
-                {items.map((item) => (
-                  <article className="row" key={item.id}>
+                {visibleItems.map((item) => (
+                  <article
+                    className={`row ${highlightItemId === item.id ? "item-highlight" : ""}`}
+                    key={item.id}
+                    id={`item-${item.id}`}
+                  >
                     <div>
                       <strong>{item.title}</strong>
                       <div className="meta">{formatWhen(item.dueAt)}</div>
@@ -320,6 +389,12 @@ export function SubjectsPage() {
                       </div>
                     </div>
                     <div className="row-actions">
+                      <Link
+                        className="btn ghost sm"
+                        to={`/apuntes?subjectId=${selected.id}&itemId=${item.id}&new=1`}
+                      >
+                        Apunte
+                      </Link>
                       <button
                         className="btn ghost sm"
                         type="button"

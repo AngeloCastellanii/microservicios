@@ -75,6 +75,7 @@ export type Notification = {
   kind: string;
   title: string;
   body: string;
+  relatedItemId?: string;
   relatedItemTitle: string;
   relatedSubjectName: string;
   readAt: string;

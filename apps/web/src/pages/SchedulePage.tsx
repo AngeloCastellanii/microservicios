@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api, type ScheduleSlot, type Subject } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
@@ -15,6 +15,11 @@ const emptyForm = {
   label: "",
 };
 
+function todayDayN() {
+  const js = new Date().getDay();
+  return js === 0 ? 7 : js;
+}
+
 export function SchedulePage() {
   const { current } = usePeriod();
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
@@ -22,6 +27,8 @@ export function SchedulePage() {
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [view, setView] = useState<"week" | "today">("week");
+  const today = todayDayN();
 
   async function reload() {
     if (!current) {
@@ -42,7 +49,12 @@ export function SchedulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
 
-  function openCreate(day = 1) {
+  const visibleDays = useMemo(
+    () => (view === "today" ? DAYS.filter((d) => d.n === today) : DAYS),
+    [view, today],
+  );
+
+  function openCreate(day = today) {
     setForm({
       ...emptyForm,
       dayOfWeek: day,
@@ -125,13 +137,33 @@ export function SchedulePage() {
       />
       {error && <p className="error">{error}</p>}
 
+      <div className="schedule-toolbar" role="tablist" aria-label="Vista del horario">
+        <button
+          type="button"
+          className={`filter-chip ${view === "today" ? "is-on" : ""}`}
+          onClick={() => setView("today")}
+        >
+          Hoy
+        </button>
+        <button
+          type="button"
+          className={`filter-chip ${view === "week" ? "is-on" : ""}`}
+          onClick={() => setView("week")}
+        >
+          Semana
+        </button>
+      </div>
+
       <div className="schedule-scroll">
-        <div className="schedule-grid" role="list">
-          {DAYS.map((day) => {
+        <div
+          className={`schedule-grid ${view === "today" ? "is-today-view" : ""}`}
+          role="list"
+        >
+          {visibleDays.map((day) => {
             const daySlots = slots.filter((s) => s.dayOfWeek === day.n);
             return (
               <section
-                className="day-col"
+                className={`day-col ${day.n === today ? "is-today" : ""}`}
                 key={day.n}
                 role="listitem"
                 aria-label={day.label}
@@ -140,6 +172,7 @@ export function SchedulePage() {
                   <span className="day-full">{day.label}</span>
                   <span className="day-short">{day.short}</span>{" "}
                   <span className="count">· {daySlots.length}</span>
+                  {day.n === today && <span className="meta"> · hoy</span>}
                 </h3>
                 {daySlots.length === 0 && <p className="empty">Libre</p>}
                 {daySlots.map((s) => (

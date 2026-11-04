@@ -3,6 +3,7 @@ import { api, type Notification } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
+import { exportPeriodJson } from "../export-period";
 import {
   formatWhen,
   notifKindLabel,
@@ -29,6 +30,7 @@ export function ProfilePage() {
 
   const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
   const [savedMsg, setSavedMsg] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [periodForm, setPeriodForm] = useState({
     name: "",
     kind: "TRIMESTER" as "TRIMESTER" | "SEMESTER" | "CUSTOM",
@@ -221,6 +223,19 @@ export function ProfilePage() {
                 <span className="meta">
                   {periodKindLabel(current.kind)} · {current.name}
                 </span>
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  disabled={exporting}
+                  onClick={() => {
+                    setExporting(true);
+                    exportPeriodJson(current)
+                      .catch((err: Error) => setError(err.message))
+                      .finally(() => setExporting(false));
+                  }}
+                >
+                  {exporting ? "Exportando…" : "Exportar JSON"}
+                </button>
                 <button
                   type="button"
                   className="btn ghost sm"

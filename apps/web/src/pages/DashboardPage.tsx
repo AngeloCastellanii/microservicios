@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, type Item, type Notification } from "../api";
 import { BRAND_NAME, BRAND_TAGLINE } from "../brand";
 import { EmptyState } from "../components/EmptyState";
 import { StatusBadge } from "../components/StatusBadge";
+import { exportPeriodJson } from "../export-period";
 import {
   formatWhen,
   itemStatusLabel,
@@ -15,6 +16,7 @@ import { periodProgress } from "../period-progress";
 import { usePeriod } from "../period-context";
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { current, loading: periodLoading } = usePeriod();
   const [items, setItems] = useState<Item[]>([]);
   const [upcoming, setUpcoming] = useState<Item[]>([]);
@@ -22,6 +24,12 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [focusCourse, setFocusCourse] = useState("");
+  const [exporting, setExporting] = useState(false);
+
+  async function reloadNotifications() {
+    const next = await api.listNotifications();
+    setNotes(next.filter((n) => !n.dismissedAt).slice(0, 5));
+  }
 
   useEffect(() => {
     if (!current) {
@@ -40,7 +48,7 @@ export function DashboardPage() {
       .then(([allItems, nextItems, nextNotes]) => {
         setItems(allItems);
         setUpcoming(nextItems);
-        setNotes(nextNotes.slice(0, 5));
+        setNotes(nextNotes.filter((n) => !n.dismissedAt).slice(0, 5));
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
@@ -84,6 +92,23 @@ export function DashboardPage() {
             <p className="lede period-hero-meta">
               Periodo: {periodKindLabel(current.kind)} · {current.name}
             </p>
+          )}
+          {current && (
+            <div className="chip-row" style={{ marginTop: "0.75rem" }}>
+              <button
+                type="button"
+                className="btn ghost sm"
+                disabled={exporting}
+                onClick={() => {
+                  setExporting(true);
+                  exportPeriodJson(current)
+                    .catch((err: Error) => setError(err.message))
+                    .finally(() => setExporting(false));
+                }}
+              >
+                {exporting ? "Exportando…" : "Exportar JSON"}
+              </button>
+            </div>
           )}
         </div>
         <div className="hero-stats" aria-label="Resumen rápido">
@@ -311,13 +336,53 @@ export function DashboardPage() {
                       <div className="meta">
                         {n.relatedSubjectName || n.body}
                         {n.relatedItemTitle ? ` · ${n.relatedItemTitle}` : ""}
+                        {n.readAt ? " · leído" : ""}
+                      </div>
+                      <div className="chip-row" style={{ marginTop: "0.35rem" }}>
+                        <StatusBadge
+                          tone={n.kind === "PERSISTENT" ? "info" : "ok"}
+                        >
+                          {notifKindLabel(n.kind)}
+                        </StatusBadge>
                       </div>
                     </div>
-                    <StatusBadge
-                      tone={n.kind === "PERSISTENT" ? "info" : "ok"}
-                    >
-                      {notifKindLabel(n.kind)}
-                    </StatusBadge>
+                    <div className="row-actions">
+                      {n.relatedItemId && (
+                        <button
+                          type="button"
+                          className="btn ghost sm"
+                          onClick={() =>
+                            navigate(
+                              `/cursos?itemId=${n.relatedItemId}`,
+                            )
+                          }
+                        >
+                          Ir
+                        </button>
+                      )}
+                      {!n.readAt && (
+                        <button
+                          type="button"
+                          className="btn ghost sm"
+                          onClick={async () => {
+                            await api.markRead(n.id);
+                            await reloadNotifications();
+                          }}
+                        >
+                          Leer
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn ghost sm"
+                        onClick={async () => {
+                          await api.dismiss(n.id);
+                          await reloadNotifications();
+                        }}
+                      >
+                        Descartar
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>

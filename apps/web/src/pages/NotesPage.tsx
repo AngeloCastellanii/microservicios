@@ -1,13 +1,23 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, type Item, type Note, type Subject } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
+import { PhotoLightbox } from "../components/PhotoLightbox";
 import { ViewHero } from "../components/ViewHero";
 import { usePeriod } from "../period-context";
 
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
 type DraftPhoto = { id: string; dataUrl: string; data: string };
 
-function NotePhoto({ id }: { id: string }) {
+function NotePhoto({
+  id,
+  onOpen,
+}: {
+  id: string;
+  onOpen?: (src: string) => void;
+}) {
   const [src, setSrc] = useState("");
 
   useEffect(() => {
@@ -25,10 +35,23 @@ function NotePhoto({ id }: { id: string }) {
   }, [id]);
 
   if (!src) return <span className="photo-placeholder" aria-hidden />;
-  return <img src={src} alt="" />;
+  if (!onOpen) return <img src={src} alt="" />;
+  return (
+    <button
+      type="button"
+      className="photo-open"
+      onClick={() => onOpen(src)}
+      aria-label="Ver foto ampliada"
+    >
+      <img src={src} alt="" />
+    </button>
+  );
 }
 
 async function compressImage(file: File): Promise<DraftPhoto> {
+  if (file.size > 8 * 1024 * 1024) {
+    throw new Error("Cada foto debe pesar menos de 8 MB antes de comprimir");
+  }
   const bitmap = await createImageBitmap(file);
   const max = 1400;
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
@@ -38,22 +61,34 @@ async function compressImage(file: File): Promise<DraftPhoto> {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("No se pudo preparar la imagen");
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
-  const data = dataUrl.split(",")[1] ?? "";
+  let quality = 0.82;
+  let dataUrl = canvas.toDataURL("image/jpeg", quality);
+  let data = dataUrl.split(",")[1] ?? "";
+  while (data.length * 0.75 > MAX_PHOTO_BYTES && quality > 0.45) {
+    quality -= 0.1;
+    dataUrl = canvas.toDataURL("image/jpeg", quality);
+    data = dataUrl.split(",")[1] ?? "";
+  }
   bitmap.close();
+  if (data.length * 0.75 > MAX_PHOTO_BYTES) {
+    throw new Error("La foto supera el tope de 2 MB tras comprimir");
+  }
   return { id: crypto.randomUUID(), dataUrl, data };
 }
 
 export function NotesPage() {
   const { current } = usePeriod();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [notes, setNotes] = useState<Note[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Note | null>(null);
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
+  const [lightboxSrc, setLightboxSrc] = useState("");
   const [form, setForm] = useState({
     title: "",
     body: "",
@@ -83,15 +118,43 @@ export function NotesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
 
+  useEffect(() => {
+    const subjectId = searchParams.get("subjectId") || "";
+    const itemId = searchParams.get("itemId") || "";
+    const wantNew = searchParams.get("new") === "1";
+    if (!wantNew && !subjectId && !itemId) return;
+    const item = items.find((row) => row.id === itemId);
+    setEditing(null);
+    setPhotos([]);
+    setForm({
+      title: "",
+      body: "",
+      subjectId: item?.subjectId || subjectId,
+      itemId: itemId || "",
+    });
+    if (subjectId) setFilter(subjectId);
+    setOpen(true);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, items, setSearchParams]);
+
   const courseItems = useMemo(
     () => items.filter((item) => !form.subjectId || item.subjectId === form.subjectId),
     [items, form.subjectId],
   );
 
+  const q = query.trim().toLowerCase();
   const visible = notes.filter((note) => {
-    if (filter === "all") return true;
-    if (filter === "general") return !note.subjectId;
-    return note.subjectId === filter;
+    if (filter === "general" && note.subjectId) return false;
+    if (filter !== "all" && filter !== "general" && note.subjectId !== filter) {
+      return false;
+    }
+    if (!q) return true;
+    return (
+      note.title.toLowerCase().includes(q) ||
+      note.body.toLowerCase().includes(q) ||
+      note.subjectName.toLowerCase().includes(q) ||
+      note.itemTitle.toLowerCase().includes(q)
+    );
   });
 
   function openCreate() {
@@ -198,6 +261,18 @@ export function NotesPage() {
       />
       {error && <p className="error">{error}</p>}
 
+      <div className="search-field">
+        <label className="sr-only" htmlFor="note-search">
+          Buscar apuntes
+        </label>
+        <input
+          id="note-search"
+          placeholder="Buscar por título, curso o actividad…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
       <div className="filter-scroll" role="tablist" aria-label="Filtrar apuntes">
         <button
           type="button"
@@ -247,7 +322,11 @@ export function NotesPage() {
               {note.images.length > 0 && (
                 <div className="photo-grid">
                   {note.images.map((image) => (
-                    <NotePhoto key={image.id} id={image.id} />
+                    <NotePhoto
+                      key={image.id}
+                      id={image.id}
+                      onOpen={setLightboxSrc}
+                    />
                   ))}
                 </div>
               )}
@@ -348,7 +427,7 @@ export function NotesPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="note-photos">Fotos</label>
+            <label htmlFor="note-photos">Fotos (máx. 2 MB c/u)</label>
             <input
               id="note-photos"
               type="file"
@@ -364,7 +443,7 @@ export function NotesPage() {
             <div className="photo-grid">
               {editing?.images.map((image) => (
                 <div className="photo-tile" key={image.id}>
-                  <NotePhoto id={image.id} />
+                  <NotePhoto id={image.id} onOpen={setLightboxSrc} />
                   <button
                     type="button"
                     className="btn ghost sm"
@@ -382,7 +461,14 @@ export function NotesPage() {
               ))}
               {photos.map((photo) => (
                 <div className="photo-tile" key={photo.id}>
-                  <img src={photo.dataUrl} alt="" />
+                  <button
+                    type="button"
+                    className="photo-open"
+                    onClick={() => setLightboxSrc(photo.dataUrl)}
+                    aria-label="Ver foto ampliada"
+                  >
+                    <img src={photo.dataUrl} alt="" />
+                  </button>
                   <button
                     type="button"
                     className="btn ghost sm"
@@ -403,6 +489,10 @@ export function NotesPage() {
           </button>
         </form>
       </Modal>
+
+      {lightboxSrc && (
+        <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc("")} />
+      )}
     </>
   );
 }
