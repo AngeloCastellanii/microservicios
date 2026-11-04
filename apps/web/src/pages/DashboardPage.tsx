@@ -4,7 +4,6 @@ import { api, type Item, type Notification } from "../api";
 import { BRAND_NAME, BRAND_TAGLINE } from "../brand";
 import { EmptyState } from "../components/EmptyState";
 import { StatusBadge } from "../components/StatusBadge";
-import { exportPeriodJson } from "../export-period";
 import {
   formatWhen,
   itemStatusLabel,
@@ -24,7 +23,6 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [focusCourse, setFocusCourse] = useState("");
-  const [exporting, setExporting] = useState(false);
 
   async function reloadNotifications() {
     const next = await api.listNotifications();
@@ -38,7 +36,8 @@ export function DashboardPage() {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    let cancelled = false;
+    setLoading((was) => was || items.length === 0);
     setFocusCourse("");
     Promise.all([
       api.listItems({ periodId: current.id }),
@@ -46,12 +45,21 @@ export function DashboardPage() {
       api.listNotifications(),
     ])
       .then(([allItems, nextItems, nextNotes]) => {
+        if (cancelled) return;
         setItems(allItems);
         setUpcoming(nextItems);
         setNotes(nextNotes.filter((n) => !n.dismissedAt).slice(0, 5));
       })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current]);
 
   const persistentCount = notes.filter((n) => n.kind === "PERSISTENT").length;
@@ -92,23 +100,6 @@ export function DashboardPage() {
             <p className="lede period-hero-meta">
               Periodo: {periodKindLabel(current.kind)} · {current.name}
             </p>
-          )}
-          {current && (
-            <div className="chip-row" style={{ marginTop: "0.75rem" }}>
-              <button
-                type="button"
-                className="btn ghost sm"
-                disabled={exporting}
-                onClick={() => {
-                  setExporting(true);
-                  exportPeriodJson(current)
-                    .catch((err: Error) => setError(err.message))
-                    .finally(() => setExporting(false));
-                }}
-              >
-                {exporting ? "Exportando…" : "Exportar JSON"}
-              </button>
-            </div>
           )}
         </div>
         <div className="hero-stats" aria-label="Resumen rápido">

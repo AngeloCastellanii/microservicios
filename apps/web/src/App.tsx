@@ -1,5 +1,16 @@
-import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import {
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { BRAND_NAME } from "./brand";
 import { DashboardPage } from "./pages/DashboardPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
@@ -11,9 +22,16 @@ import { periodKindLabel } from "./labels";
 import { loadProfile, type ProfileSettings } from "./profile-settings";
 
 export function App() {
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const { current } = usePeriod();
   const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
+  const navRef = useRef<HTMLElement>(null);
+  const [pill, setPill] = useState({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
 
   useEffect(() => {
     const sync = () => setProfile(loadProfile());
@@ -21,7 +39,35 @@ export function App() {
     return () => window.removeEventListener("studyy-profile-updated", sync);
   }, []);
 
+  useLayoutEffect(() => {
+    const updatePill = () => {
+      const nav = navRef.current;
+      if (!nav) return;
+      const narrow = window.matchMedia("(max-width: 720px)").matches;
+      const active = nav.querySelector("a.active") as HTMLElement | null;
+      if (!active || narrow || menuOpen) {
+        setPill((prev) => ({ ...prev, opacity: 0 }));
+        return;
+      }
+      setPill({
+        left: active.offsetLeft,
+        width: active.offsetWidth,
+        opacity: 1,
+      });
+    };
+
+    updatePill();
+    window.addEventListener("resize", updatePill);
+    return () => window.removeEventListener("resize", updatePill);
+  }, [location.pathname, menuOpen]);
+
   const closeMenu = () => setMenuOpen(false);
+
+  const pillStyle = {
+    "--pill-left": `${pill.left}px`,
+    "--pill-width": `${pill.width}px`,
+    opacity: pill.opacity,
+  } as CSSProperties;
 
   return (
     <div className="app-shell">
@@ -35,6 +81,7 @@ export function App() {
             to="/"
             className="brand"
             end
+            viewTransition
             aria-label={`${BRAND_NAME} inicio`}
             onClick={closeMenu}
           >
@@ -53,23 +100,25 @@ export function App() {
           </button>
 
           <nav
+            ref={navRef}
             id="nav-principal"
             className={`nav-links ${menuOpen ? "is-open" : ""}`}
             aria-label="Principal"
           >
-            <NavLink to="/" end onClick={closeMenu}>
+            <span className="nav-pill" style={pillStyle} aria-hidden />
+            <NavLink to="/" end viewTransition onClick={closeMenu}>
               Inicio
             </NavLink>
-            <NavLink to="/cursos" onClick={closeMenu}>
+            <NavLink to="/cursos" viewTransition onClick={closeMenu}>
               Cursos
             </NavLink>
-            <NavLink to="/horario" onClick={closeMenu}>
+            <NavLink to="/horario" viewTransition onClick={closeMenu}>
               Horario
             </NavLink>
-            <NavLink to="/apuntes" onClick={closeMenu}>
+            <NavLink to="/apuntes" viewTransition onClick={closeMenu}>
               Apuntes
             </NavLink>
-            <NavLink to="/perfil" onClick={closeMenu}>
+            <NavLink to="/perfil" viewTransition onClick={closeMenu}>
               Perfil
             </NavLink>
           </nav>
@@ -81,7 +130,11 @@ export function App() {
               <span className="period-chip">{profile.displayName}</span>
             )}
             {current && (
-              <NavLink to="/perfil" className="period-chip period-chip-link">
+              <NavLink
+                to="/perfil"
+                className="period-chip period-chip-link"
+                viewTransition
+              >
                 {periodKindLabel(current.kind)} · {current.name}
               </NavLink>
             )}
@@ -89,16 +142,18 @@ export function App() {
         )}
       </header>
 
-      <main id="contenido">
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/cursos" element={<SubjectsPage />} />
-          <Route path="/materias" element={<SubjectsPage />} />
-          <Route path="/horario" element={<SchedulePage />} />
-          <Route path="/apuntes" element={<NotesPage />} />
-          <Route path="/perfil" element={<ProfilePage />} />
-          <Route path="/notificaciones" element={<ProfilePage />} />
-        </Routes>
+      <main id="contenido" className="view-root">
+        <div key={location.pathname} className="page-enter">
+          <Routes location={location}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/cursos" element={<SubjectsPage />} />
+            <Route path="/materias" element={<SubjectsPage />} />
+            <Route path="/horario" element={<SchedulePage />} />
+            <Route path="/apuntes" element={<NotesPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/notificaciones" element={<ProfilePage />} />
+          </Routes>
+        </div>
       </main>
     </div>
   );

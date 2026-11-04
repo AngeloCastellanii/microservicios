@@ -1,9 +1,9 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, type Notification } from "../api";
 import { EmptyState } from "../components/EmptyState";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
-import { exportPeriodJson } from "../export-period";
+import { exportPeriodJson, importPeriodJson } from "../export-period";
 import {
   formatWhen,
   notifKindLabel,
@@ -26,11 +26,14 @@ export function ProfilePage() {
     createPeriod,
     savePeriodDates,
     removePeriod,
+    refresh,
   } = usePeriod();
 
   const [profile, setProfile] = useState<ProfileSettings>(() => loadProfile());
   const [savedMsg, setSavedMsg] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
   const [periodForm, setPeriodForm] = useState({
     name: "",
     kind: "TRIMESTER" as "TRIMESTER" | "SEMESTER" | "CUSTOM",
@@ -226,19 +229,6 @@ export function ProfilePage() {
                 <button
                   type="button"
                   className="btn ghost sm"
-                  disabled={exporting}
-                  onClick={() => {
-                    setExporting(true);
-                    exportPeriodJson(current)
-                      .catch((err: Error) => setError(err.message))
-                      .finally(() => setExporting(false));
-                  }}
-                >
-                  {exporting ? "Exportando…" : "Exportar JSON"}
-                </button>
-                <button
-                  type="button"
-                  className="btn ghost sm"
                   onClick={async () => {
                     if (
                       !confirm(
@@ -370,6 +360,63 @@ export function ProfilePage() {
               Crear y activar
             </button>
           </form>
+        </section>
+
+        <section className="panel profile-span" aria-labelledby="backup-title">
+          <div className="panel-head">
+            <h2 id="backup-title">Copia de seguridad</h2>
+          </div>
+          <p className="meta" style={{ marginBottom: "0.85rem" }}>
+            Exporta o importa el periodo en JSON (cursos, actividades, horario y
+            apuntes).
+          </p>
+          <div className="chip-row">
+            <button
+              type="button"
+              className="btn sm"
+              disabled={!current || exporting || importing}
+              onClick={() => {
+                if (!current) return;
+                setExporting(true);
+                exportPeriodJson(current)
+                  .catch((err: Error) => setError(err.message))
+                  .finally(() => setExporting(false));
+              }}
+            >
+              {exporting ? "Exportando…" : "Exportar JSON"}
+            </button>
+            <button
+              type="button"
+              className="btn ghost sm"
+              disabled={importing || exporting}
+              onClick={() => importRef.current?.click()}
+            >
+              {importing ? "Importando…" : "Importar JSON"}
+            </button>
+            <input
+              ref={importRef}
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                setImporting(true);
+                setError("");
+                importPeriodJson(file)
+                  .then(async (period) => {
+                    await refresh();
+                    await setCurrentId(period.id);
+                    setSavedMsg(`Importado: ${period.name}`);
+                    window.setTimeout(() => setSavedMsg(""), 2200);
+                  })
+                  .catch((err: Error) => setError(err.message))
+                  .finally(() => setImporting(false));
+              }}
+            />
+            {savedMsg && <span className="meta">{savedMsg}</span>}
+          </div>
         </section>
 
         <section className="panel profile-span" aria-labelledby="avisos-title">

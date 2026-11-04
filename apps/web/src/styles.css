@@ -257,22 +257,43 @@ textarea {
 }
 
 .nav-links {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem;
   margin-left: auto;
 }
 
+.nav-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2.5rem;
+  width: var(--pill-width, 0);
+  transform: translateX(var(--pill-left, 0));
+  border-radius: 999px;
+  background: var(--forest);
+  pointer-events: none;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
+  z-index: 0;
+}
+
 .nav-links a {
+  position: relative;
+  z-index: 1;
   padding: 0.55rem 0.9rem;
   border-radius: 999px;
   color: var(--muted);
   font-weight: 600;
   font-size: 0.92rem;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition: color 0.22s ease, background 0.22s ease;
   min-height: 2.5rem;
   display: inline-flex;
   align-items: center;
+  background: transparent;
 }
 
 .nav-links a:hover {
@@ -281,8 +302,49 @@ textarea {
 }
 
 .nav-links a.active {
-  background: var(--forest);
+  background: transparent;
   color: #f4faf7;
+}
+
+.nav-links a.active:hover {
+  background: transparent;
+  color: #f4faf7;
+}
+
+.view-root {
+  view-transition-name: page-main;
+}
+
+.page-enter {
+  animation: page-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (view-transition-name: none) {
+  ::view-transition-old(page-main) {
+    animation: page-out 0.22s ease both;
+  }
+
+  ::view-transition-new(page-main) {
+    animation: page-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes page-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
 }
 
 .side-pick {
@@ -826,9 +888,18 @@ textarea {
     display: flex;
   }
 
+  .nav-pill {
+    display: none;
+  }
+
   .nav-links a {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .nav-links a.active {
+    background: var(--forest);
+    color: #f4faf7;
   }
 
   .grid-2 {
@@ -1003,6 +1074,11 @@ textarea {
   flex-direction: column;
   gap: 0.2rem;
   color: inherit;
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease,
+    transform 0.28s ease;
 }
 
 .course-card.active {
