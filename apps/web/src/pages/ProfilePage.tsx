@@ -43,6 +43,7 @@ export function ProfilePage() {
   });
   const [dates, setDates] = useState({ startsAt: "", endsAt: "" });
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [avisosOpen, setAvisosOpen] = useState(true);
   const [error, setError] = useState("");
 
   async function reloadNotifications() {
@@ -421,67 +422,90 @@ export function ProfilePage() {
 
         <section className="panel profile-span" aria-labelledby="avisos-title">
           <div className="panel-head">
-            <h2 id="avisos-title">Avisos</h2>
+            <h2 id="avisos-title">
+              Avisos
+              {notifications.length > 0 && (
+                <span className="meta" style={{ fontWeight: 500 }}>
+                  {" "}
+                  · {notifications.length}
+                </span>
+              )}
+            </h2>
+            <button
+              type="button"
+              className="btn ghost sm"
+              aria-expanded={avisosOpen}
+              aria-controls="avisos-panel"
+              onClick={() => setAvisosOpen((open) => !open)}
+            >
+              {avisosOpen ? "Colapsar" : "Expandir"}
+            </button>
           </div>
-          {notifications.length === 0 ? (
-            <EmptyState
-              title="Sin avisos"
-              description="Los recordatorios de entregas aparecerán aquí."
-            />
-          ) : (
-            <div className="list">
-              {notifications.map((n) => (
-                <article className="row" key={n.id}>
-                  <div>
-                    <strong>{n.title}</strong>
-                    <div className="meta">
-                      {n.body}
-                      {n.relatedItemTitle
-                        ? ` · ${n.relatedItemTitle}${
-                            n.relatedSubjectName
-                              ? ` (${n.relatedSubjectName})`
-                              : ""
-                          }`
-                        : ""}
+          <div
+            id="avisos-panel"
+            className={`collapse-body ${avisosOpen ? "is-open" : ""}`}
+            aria-hidden={!avisosOpen}
+          >
+            {notifications.length === 0 ? (
+              <EmptyState
+                title="Sin avisos"
+                description="Los recordatorios de entregas aparecerán aquí."
+              />
+            ) : (
+              <div className="list">
+                {notifications.map((n) => (
+                  <article className="row" key={n.id}>
+                    <div>
+                      <strong>{n.title}</strong>
+                      <div className="meta">
+                        {n.body}
+                        {n.relatedItemTitle
+                          ? ` · ${n.relatedItemTitle}${
+                              n.relatedSubjectName
+                                ? ` (${n.relatedSubjectName})`
+                                : ""
+                            }`
+                          : ""}
+                      </div>
+                      <div className="meta" style={{ marginTop: "0.25rem" }}>
+                        {formatWhen(n.createdAt)}
+                        {n.readAt ? " · leída" : " · sin leer"}
+                      </div>
                     </div>
-                    <div className="meta" style={{ marginTop: "0.25rem" }}>
-                      {formatWhen(n.createdAt)}
-                      {n.readAt ? " · leída" : " · sin leer"}
-                    </div>
-                  </div>
-                  <div className="chip-row">
-                    <StatusBadge
-                      tone={n.kind === "PERSISTENT" ? "info" : "ok"}
-                    >
-                      {notifKindLabel(n.kind)}
-                    </StatusBadge>
-                    {!n.readAt && (
+                    <div className="chip-row">
+                      <StatusBadge
+                        tone={n.kind === "PERSISTENT" ? "info" : "ok"}
+                      >
+                        {notifKindLabel(n.kind)}
+                      </StatusBadge>
+                      {!n.readAt && (
+                        <button
+                          className="btn ghost sm"
+                          type="button"
+                          onClick={async () => {
+                            await api.markRead(n.id);
+                            await reloadNotifications();
+                          }}
+                        >
+                          Marcar leída
+                        </button>
+                      )}
                       <button
                         className="btn ghost sm"
                         type="button"
                         onClick={async () => {
-                          await api.markRead(n.id);
+                          await api.dismiss(n.id);
                           await reloadNotifications();
                         }}
                       >
-                        Marcar leída
+                        Descartar
                       </button>
-                    )}
-                    <button
-                      className="btn ghost sm"
-                      type="button"
-                      onClick={async () => {
-                        await api.dismiss(n.id);
-                        await reloadNotifications();
-                      }}
-                    >
-                      Descartar
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </div>
     </>
